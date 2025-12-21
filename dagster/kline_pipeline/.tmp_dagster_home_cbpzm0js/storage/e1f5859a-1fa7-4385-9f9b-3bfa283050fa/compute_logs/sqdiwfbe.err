@@ -1,0 +1,40 @@
+[32m2025-12-21 07:05:07 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - e1f5859a-1fa7-4385-9f9b-3bfa283050fa - 1724780 - LOGS_CAPTURED - Started capturing logs in process (pid: 1724780).
+[32m2025-12-21 07:05:07 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - e1f5859a-1fa7-4385-9f9b-3bfa283050fa - 1724780 - bronze_ohlcv_native - STEP_START - Started execution of step "bronze_ohlcv_native".
+[32m2025-12-21 07:05:07 +0000[0m - dagster - [34mERROR[0m - [31mhourly_assets_job - e1f5859a-1fa7-4385-9f9b-3bfa283050fa - 1724780 - bronze_ohlcv_native - STEP_FAILURE - Execution of step "bronze_ohlcv_native" failed.
+
+dagster._core.errors.DagsterInvariantViolationError: Cannot access partition_key for a non-partitioned run
+
+Stack Trace:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_plan.py", line 247, in dagster_event_sequence_for_step
+    yield from check.generator(step_events)
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_step.py", line 504, in core_dagster_event_sequence_for_step
+    for user_event in _step_output_error_checked_user_event_sequence(
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_step.py", line 183, in _step_output_error_checked_user_event_sequence
+    for user_event in user_event_sequence:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_step.py", line 88, in _process_asset_results_to_events
+    for user_event in user_event_sequence:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute.py", line 188, in execute_core_compute
+    for step_output in _yield_compute_results(step_context, inputs, compute_fn, compute_context):
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute.py", line 157, in _yield_compute_results
+    for event in iterate_with_context(
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_utils/__init__.py", line 394, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 135, in _coerce_op_compute_fn_to_iterator
+    result = invoke_compute_fn(
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 115, in invoke_compute_fn
+    return fn(context, **args_to_pass) if context_arg_provided else fn(**args_to_pass)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/kline_pipeline/kline_pipeline/assets_bronze.py", line 74, in bronze_ohlcv_native
+    context.partition_key, "%Y-%m-%d-%H:%M"
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/context/asset_execution_context.py", line 380, in partition_key
+    return self.op_execution_context.partition_key
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/context/op_execution_context.py", line 280, in partition_key
+    return self._step_execution_context.partition_key
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/context/system.py", line 986, in partition_key
+    raise DagsterInvariantViolationError(
+[0m

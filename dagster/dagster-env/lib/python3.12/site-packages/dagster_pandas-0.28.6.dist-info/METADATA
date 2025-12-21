@@ -1,0 +1,35 @@
+Metadata-Version: 2.4
+Name: dagster-pandas
+Version: 0.28.6
+Summary: Utilities and examples for working with pandas and dagster, an opinionated framework for expressing data pipelines
+Home-page: https://github.com/dagster-io/dagster
+Author: Dagster Labs
+Author-email: hello@dagsterlabs.com
+License: Apache-2.0
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10,<3.14
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: dagster==1.12.6
+Requires-Dist: pandas
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# dagster-pandas
+
+The docs for `dagster-pandas` can be found
+[here](https://docs.dagster.io/api/python-api/libraries/dagster-pandas).

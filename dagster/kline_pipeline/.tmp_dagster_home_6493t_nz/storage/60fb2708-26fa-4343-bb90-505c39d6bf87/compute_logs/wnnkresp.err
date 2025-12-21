@@ -1,0 +1,25 @@
+[32m2025-12-20 10:00:10 +0000[0m - dagster - [34mDEBUG[0m - fact_ohlcv_hourly_job - 60fb2708-26fa-4343-bb90-505c39d6bf87 - 508666 - LOGS_CAPTURED - Started capturing logs in process (pid: 508666).
+[32m2025-12-20 10:00:10 +0000[0m - dagster - [34mDEBUG[0m - fact_ohlcv_hourly_job - 60fb2708-26fa-4343-bb90-505c39d6bf87 - 508666 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
+[32m2025-12-20 10:00:10 +0000[0m - dagster - [34mINFO[0m - fact_ohlcv_hourly_job - 60fb2708-26fa-4343-bb90-505c39d6bf87 - fact_ohlcv_kraken_eth_1m - Processing hour: 2025-12-20 09:00:00 → 2025-12-20 10:00:00
+[32m2025-12-20 10:00:10 +0000[0m - dagster - [34mERROR[0m - [31mfact_ohlcv_hourly_job - 60fb2708-26fa-4343-bb90-505c39d6bf87 - 508666 - fact_ohlcv_kraken_eth_1m - STEP_FAILURE - Execution of step "fact_ohlcv_kraken_eth_1m" failed.
+
+dagster._core.errors.DagsterExecutionStepExecutionError: Error occurred while executing op "fact_ohlcv_kraken_eth_1m"::
+
+TypeError: can't compare offset-naive and offset-aware datetimes
+
+Stack Trace:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/utils.py", line 57, in op_execution_error_boundary
+    yield
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_utils/__init__.py", line 394, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 135, in _coerce_op_compute_fn_to_iterator
+    result = invoke_compute_fn(
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 115, in invoke_compute_fn
+    return fn(context, **args_to_pass) if context_arg_provided else fn(**args_to_pass)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/kline_pipeline/kline_pipeline/assets.py", line 138, in fact_ohlcv_kraken_eth_1m
+    if now < ready_time:
+       ^^^^^^^^^^^^^^^^
+[0m

@@ -1,0 +1,6 @@
+[32m2025-12-20 06:17:14 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 459b631c-59bc-43f6-b42b-40943ab5de72 - 342296 - LOGS_CAPTURED - Started capturing logs in process (pid: 342296).
+[32m2025-12-20 06:17:14 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 459b631c-59bc-43f6-b42b-40943ab5de72 - 342296 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
+[32m2025-12-20 06:17:14 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - 459b631c-59bc-43f6-b42b-40943ab5de72 - fact_ohlcv_kraken_eth_1m - Running BigQuery MERGE: Kraken ETH 1m → fact_ohlcv
+[32m2025-12-20 06:17:16 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 459b631c-59bc-43f6-b42b-40943ab5de72 - 342296 - fact_ohlcv_kraken_eth_1m - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
+[32m2025-12-20 06:17:17 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 459b631c-59bc-43f6-b42b-40943ab5de72 - 342296 - fact_ohlcv_kraken_eth_1m - ASSET_MATERIALIZATION - Materialized value fact_ohlcv_kraken_eth_1m.
+[32m2025-12-20 06:17:17 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 459b631c-59bc-43f6-b42b-40943ab5de72 - 342296 - fact_ohlcv_kraken_eth_1m - STEP_SUCCESS - Finished execution of step "fact_ohlcv_kraken_eth_1m" in 2.94s.

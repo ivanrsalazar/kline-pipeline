@@ -1,0 +1,87 @@
+[32m2025-12-21 08:00:11 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1777557 - LOGS_CAPTURED - Started capturing logs in process (pid: 1777557).
+[32m2025-12-21 08:00:11 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1777557 - bronze_ohlcv_native - STEP_START - Started execution of step "bronze_ohlcv_native".
+[32m2025-12-21 08:00:11 +0000[0m - dagster - [34mINFO[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - bronze_ohlcv_native - Bronze ingest Kraken ETH-USD | 2025-12-21 07:00:00+00:00 → 2025-12-21 08:00:00+00:00
+[32m2025-12-21 08:00:12 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1777557 - bronze_ohlcv_native - STEP_UP_FOR_RETRY - Execution of step "bronze_ohlcv_native" failed and has requested a retry in 300 seconds.
+
+dagster._core.execution.plan.utils.RetryRequestedFromPolicy
+
+Stack Trace:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_plan.py", line 247, in dagster_event_sequence_for_step
+    yield from check.generator(step_events)
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_step.py", line 504, in core_dagster_event_sequence_for_step
+    for user_event in _step_output_error_checked_user_event_sequence(
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_step.py", line 183, in _step_output_error_checked_user_event_sequence
+    for user_event in user_event_sequence:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/execute_step.py", line 88, in _process_asset_results_to_events
+    for user_event in user_event_sequence:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute.py", line 188, in execute_core_compute
+    for step_output in _yield_compute_results(step_context, inputs, compute_fn, compute_context):
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute.py", line 157, in _yield_compute_results
+    for event in iterate_with_context(
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_utils/__init__.py", line 392, in iterate_with_context
+    with context_fn():
+  File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/utils.py", line 75, in op_execution_error_boundary
+    raise RetryRequestedFromPolicy(
+
+The above exception was caused by the following exception:
+google.api_core.exceptions.NotFound: 404 GET https://bigquery.googleapis.com/bigquery/v2/projects/kline-pipeline/queries/b1eac48f-e3a9-4531-80e7-6364dbc456f4?maxResults=0&location=US&prettyPrint=false: Not found: Files gs://kline-pipeline-bronze/exchange=kraken/symbol=ETH-USD/interval_minutes=1/year=2025/month=12/day=20/hour=06/part-088840457dc2449280294b3ef38c82c1.jsonl (Version 1766300413885521)
+
+Location: US
+Job ID: b1eac48f-e3a9-4531-80e7-6364dbc456f4
+
+
+Stack Trace:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/utils.py", line 57, in op_execution_error_boundary
+    yield
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_utils/__init__.py", line 394, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 135, in _coerce_op_compute_fn_to_iterator
+    result = invoke_compute_fn(
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 115, in invoke_compute_fn
+    return fn(context, **args_to_pass) if context_arg_provided else fn(**args_to_pass)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/kline_pipeline/kline_pipeline/assets_bronze.py", line 107, in bronze_ohlcv_native
+    job.result()
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1742, in is_job_done
+    self._reload_query_results(retry=retry, **reload_query_results_kwargs)
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1534, in _reload_query_results
+    self._query_results = self._client._get_query_results(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/client.py", line 2113, in _get_query_results
+    resource = self._call_api(
+               ^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/client.py", line 861, in _call_api
+    return call()
+           ^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/_http/__init__.py", line 494, in api_request
+    raise exceptions.from_http_response(response)
+

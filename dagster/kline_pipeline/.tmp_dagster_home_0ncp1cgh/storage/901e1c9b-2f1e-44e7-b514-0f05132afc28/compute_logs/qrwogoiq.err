@@ -1,0 +1,67 @@
+[32m2025-12-20 10:22:35 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 901e1c9b-2f1e-44e7-b514-0f05132afc28 - 530951 - LOGS_CAPTURED - Started capturing logs in process (pid: 530951).
+[32m2025-12-20 10:22:35 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 901e1c9b-2f1e-44e7-b514-0f05132afc28 - 530951 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
+[32m2025-12-20 10:22:35 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - 901e1c9b-2f1e-44e7-b514-0f05132afc28 - fact_ohlcv_kraken_eth_1m - Processing partition: 2025-12-20-09:00 (2025-12-20T09:00:00+00:00 → 2025-12-20T10:00:00+00:00)
+[32m2025-12-20 10:22:35 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - 901e1c9b-2f1e-44e7-b514-0f05132afc28 - fact_ohlcv_kraken_eth_1m - Executing BigQuery MERGE
+[32m2025-12-20 10:22:36 +0000[0m - dagster - [34mERROR[0m - [31m__ASSET_JOB - 901e1c9b-2f1e-44e7-b514-0f05132afc28 - 530951 - fact_ohlcv_kraken_eth_1m - STEP_FAILURE - Execution of step "fact_ohlcv_kraken_eth_1m" failed.
+
+dagster._core.errors.DagsterExecutionStepExecutionError: Error occurred while executing op "fact_ohlcv_kraken_eth_1m"::
+
+google.api_core.exceptions.BadRequest: 400 GET https://bigquery.googleapis.com/bigquery/v2/projects/kline-pipeline/queries/6193c6e7-d2c9-4313-94f4-f9747913d1aa?maxResults=0&location=US&prettyPrint=false: Unrecognized name: interval_end; Did you mean interval_seconds? at [10:5]
+
+Location: US
+Job ID: 6193c6e7-d2c9-4313-94f4-f9747913d1aa
+
+
+Stack Trace:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/utils.py", line 57, in op_execution_error_boundary
+    yield
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_utils/__init__.py", line 394, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 135, in _coerce_op_compute_fn_to_iterator
+    result = invoke_compute_fn(
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 115, in invoke_compute_fn
+    return fn(context, **args_to_pass) if context_arg_provided else fn(**args_to_pass)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/kline_pipeline/kline_pipeline/assets.py", line 175, in fact_ohlcv_kraken_eth_1m
+    job.result()
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1742, in is_job_done
+    self._reload_query_results(retry=retry, **reload_query_results_kwargs)
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1534, in _reload_query_results
+    self._query_results = self._client._get_query_results(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/client.py", line 2113, in _get_query_results
+    resource = self._call_api(
+               ^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/client.py", line 861, in _call_api
+    return call()
+           ^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/_http/__init__.py", line 494, in api_request
+    raise exceptions.from_http_response(response)
+[0m

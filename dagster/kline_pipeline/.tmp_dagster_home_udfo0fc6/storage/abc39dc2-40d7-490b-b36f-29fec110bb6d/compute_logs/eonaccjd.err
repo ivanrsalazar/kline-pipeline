@@ -1,0 +1,6 @@
+[32m2025-12-21 06:42:41 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - abc39dc2-40d7-490b-b36f-29fec110bb6d - 1703446 - LOGS_CAPTURED - Started capturing logs in process (pid: 1703446).
+[32m2025-12-21 06:42:41 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - abc39dc2-40d7-490b-b36f-29fec110bb6d - 1703446 - bronze_ohlcv_native - STEP_START - Started execution of step "bronze_ohlcv_native".
+[32m2025-12-21 06:42:41 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - abc39dc2-40d7-490b-b36f-29fec110bb6d - bronze_ohlcv_native - Bronze ingest Kraken ETH-USD | 2025-12-21 05:00:00+00:00 → 2025-12-21 06:00:00+00:00
+[32m2025-12-21 06:42:45 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - abc39dc2-40d7-490b-b36f-29fec110bb6d - 1703446 - bronze_ohlcv_native - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
+[32m2025-12-21 06:42:45 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - abc39dc2-40d7-490b-b36f-29fec110bb6d - 1703446 - bronze_ohlcv_native - ASSET_MATERIALIZATION - Materialized value bronze_ohlcv_native.
+[32m2025-12-21 06:42:45 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - abc39dc2-40d7-490b-b36f-29fec110bb6d - 1703446 - bronze_ohlcv_native - STEP_SUCCESS - Finished execution of step "bronze_ohlcv_native" in 3.29s.

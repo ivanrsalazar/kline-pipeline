@@ -1,0 +1,44 @@
+[32m2025-12-20 22:55:33 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 4c6d33e3-b44b-42a3-b19f-2f9527b81ffd - 1255037 - LOGS_CAPTURED - Started capturing logs in process (pid: 1255037).
+[32m2025-12-20 22:55:33 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 4c6d33e3-b44b-42a3-b19f-2f9527b81ffd - 1255037 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
+[32m2025-12-20 22:55:33 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - 4c6d33e3-b44b-42a3-b19f-2f9527b81ffd - fact_ohlcv_kraken_eth_1m - Running merge for hour 2025-12-20T21:00:00+00:00 → 2025-12-20T22:00:00+00:00
+[32m2025-12-20 22:55:34 +0000[0m - dagster - [34mERROR[0m - [31m__ASSET_JOB - 4c6d33e3-b44b-42a3-b19f-2f9527b81ffd - 1255037 - fact_ohlcv_kraken_eth_1m - STEP_FAILURE - Execution of step "fact_ohlcv_kraken_eth_1m" failed.
+
+dagster._core.errors.DagsterExecutionStepExecutionError: Error occurred while executing op "fact_ohlcv_kraken_eth_1m"::
+
+google.api_core.exceptions.BadRequest: 400 Unrecognized name: payload at [34:12]; reason: invalidQuery, location: query, message: Unrecognized name: payload at [34:12]
+
+Location: US
+Job ID: fea87c77-afd0-455a-9e59-3e72217c3e44
+
+
+Stack Trace:
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/utils.py", line 57, in op_execution_error_boundary
+    yield
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_utils/__init__.py", line 394, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 135, in _coerce_op_compute_fn_to_iterator
+    result = invoke_compute_fn(
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/dagster/_core/execution/plan/compute_generator.py", line 115, in invoke_compute_fn
+    return fn(context, **args_to_pass) if context_arg_provided else fn(**args_to_pass)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/kline_pipeline/kline_pipeline/assets.py", line 182, in fact_ohlcv_kraken_eth_1m
+    job.result()
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/home/ubuntu/dagster/dagster-env/lib/python3.12/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+[0m
