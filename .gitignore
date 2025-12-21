@@ -1,0 +1,78 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# -------------------------
+# Virtual environments
+# -------------------------
+dagster/dagster-env/
+.env
+.venv
+venv/
+ENV/
+
+# -------------------------
+# Dagster runtime state
+# -------------------------
+.dagster/
+dagster/.tmp_dagster_home*
+dagster/storage/
+
+# -------------------------
+# OS / Editor
+# -------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# -------------------------
+# Logs & runtime artifacts
+# -------------------------
+*.log
+logs/
+*.out
+
+# -------------------------
+# Secrets / credentials
+# -------------------------
+*.key.json
+*.pem
+*.crt
+*.env
+.env.*
+config.local.py
+
+# -------------------------
+# Data artifacts (IMPORTANT)
+# -------------------------
+*.parquet
+*.csv
+*.jsonl
+*.avro
+
+# -------------------------
+# Ingestion runtime artifacts
+# -------------------------
+ingestion/__pycache__/
+ingestion/.cache/
+ingestion/.state/
+ingestion/*.pid
+
+# -------------------------
+# Python packaging
+# -------------------------
+build/
+dist/
+*.egg-info/
+
+# -------------------------
+# Jupyter
+# -------------------------
+.ipynb_checkpoints/
