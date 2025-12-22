@@ -23,6 +23,7 @@ ENV/
 .dagster/
 dagster/.tmp_dagster_home*
 dagster/storage/
+dagster/kline_pipeline/.tmp_dagster_home_*/
 
 # -------------------------
 # OS / Editor

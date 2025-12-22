@@ -4,43 +4,23 @@ from google.cloud import bigquery
 
 from .partitions import hourly_partitions
 
-# --------------------
-# Configuration
-# --------------------
 PROJECT_ID = "kline-pipeline"
 DATASET = "market_data"
 
-# --------------------
-# MERGE SQL
-# --------------------
 MERGE_SQL = f"""
-MERGE `{PROJECT_ID}.{DATASET}.fact_ohlcv` AS T
+MERGE `kline-pipeline.market_data.fact_ohlcv` AS T
 USING (
 
   WITH ranked AS (
     SELECT
-      exchange,
-      symbol,
-      'USD' AS quote_asset,
-      interval_seconds,
-      interval_start,
-      interval_end,
-      open,
-      high,
-      low,
-      close,
-      volume,
-      NULL AS quote_volume,
-      trade_count,
-      vwap,
-      source,
-      ingestion_ts,
-
+      *,
       ROW_NUMBER() OVER (
         PARTITION BY exchange, symbol, interval_seconds, interval_start
-        ORDER BY ingestion_ts DESC
+        ORDER BY
+          -- Prefer final candles if present
+          ingestion_ts DESC
       ) AS rn
-    FROM `{PROJECT_ID}.{DATASET}.bronze_ohlcv_native`
+    FROM `kline-pipeline.market_data.bronze_ohlcv_native`
     WHERE exchange = 'kraken'
       AND symbol = 'ETH-USD'
       AND interval_seconds = 60
@@ -48,7 +28,23 @@ USING (
       AND interval_start <  @window_end
   )
 
-  SELECT *
+  SELECT
+    exchange,
+    symbol,
+    'USD' AS quote_asset,
+    interval_seconds,
+    interval_start,
+    interval_end,
+    open,
+    high,
+    low,
+    close,
+    volume,
+    NULL AS quote_volume,
+    trade_count,
+    vwap,
+    source,
+    ingestion_ts
   FROM ranked
   WHERE rn = 1
 
@@ -109,17 +105,24 @@ WHEN NOT MATCHED THEN
     S.vwap,
     S.source,
     S.ingestion_ts
-  )
+  );
 """
 
-# --------------------
-# Dagster Asset
-# --------------------
+SILVER_COUNT_SQL = f"""
+SELECT COUNT(*) AS row_count
+FROM `{PROJECT_ID}.{DATASET}.fact_ohlcv`
+WHERE exchange = 'kraken'
+  AND symbol = 'ETH-USD'
+  AND interval_seconds = 60
+  AND interval_start >= @window_start
+  AND interval_start <  @window_end
+"""
+
 @asset(
     name="fact_ohlcv_kraken_eth_1m",
     partitions_def=hourly_partitions,
     deps=["bronze_ohlcv_native"],
-    description="Silver OHLCV fact table from native bronze (Kraken ETH-USD 1m)",
+    description="Silver OHLCV from native bronze",
 )
 def fact_ohlcv_kraken_eth_1m(context: AssetExecutionContext) -> None:
     client = bigquery.Client(project=PROJECT_ID)
@@ -131,29 +134,40 @@ def fact_ohlcv_kraken_eth_1m(context: AssetExecutionContext) -> None:
         f"Silver merge Kraken ETH-USD | {window_start} → {window_end}"
     )
 
-    job = client.query(
+    merge_job = client.query(
         MERGE_SQL,
         job_config=bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ScalarQueryParameter(
-                    "window_start", "TIMESTAMP", window_start
-                ),
-                bigquery.ScalarQueryParameter(
-                    "window_end", "TIMESTAMP", window_end
-                ),
+                bigquery.ScalarQueryParameter("window_start", "TIMESTAMP", window_start),
+                bigquery.ScalarQueryParameter("window_end", "TIMESTAMP", window_end),
+            ]
+        ),
+    )
+    merge_job.result()
+
+    # ✅ VALIDATION STEP
+    count_job = client.query(
+        SILVER_COUNT_SQL,
+        job_config=bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("window_start", "TIMESTAMP", window_start),
+                bigquery.ScalarQueryParameter("window_end", "TIMESTAMP", window_end),
             ]
         ),
     )
 
-    job.result()
-    if job.total_bytes_processed == 0:
-        raise Exception("Zero bytes processed — retrying")
+    row_count = list(count_job.result())[0]["row_count"]
+
+    if row_count == 0:
+        raise Exception(
+            f"Silver validation failed: no rows for {window_start} → {window_end}"
+        )
 
     context.add_output_metadata(
         {
-            "job_id": job.job_id,
-            "bytes_processed": job.total_bytes_processed,
             "window_start": str(window_start),
             "window_end": str(window_end),
+            "rows_present": row_count,
+            "job_id": merge_job.job_id,
         }
     )
