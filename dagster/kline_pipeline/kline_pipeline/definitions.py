@@ -4,6 +4,7 @@ from dagster import Definitions
 from .assets_bronze import bronze_ohlcv_native
 from .assets_silver import fact_ohlcv_eth_1m
 from .assets_bronze_binance import bronze_ohlcv_binance_1m
+from .assets_bronze_kraken_rest import bronze_ohlcv_kraken_rest_1m
 
 from .jobs import hourly_assets_job
 from .sensors import retry_stale_failed_partitions
@@ -13,6 +14,7 @@ defs = Definitions(
     assets=[
         bronze_ohlcv_binance_1m,
         bronze_ohlcv_native,
+        bronze_ohlcv_kraken_rest_1m,
         fact_ohlcv_eth_1m,
     ],
     jobs=[hourly_assets_job],

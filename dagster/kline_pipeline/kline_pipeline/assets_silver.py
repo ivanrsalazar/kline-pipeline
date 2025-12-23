@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from dagster import asset, AssetExecutionContext
 from google.cloud import bigquery
-
+from .slack import send_slack_message
 from .partitions import hourly_partitions
 
 PROJECT_ID = "kline-pipeline"
@@ -112,7 +112,7 @@ WHERE interval_seconds = 60
     name="fact_ohlcv_eth_1m",
     partitions_def=hourly_partitions,
     deps=[
-        "bronze_ohlcv_native",          # kraken
+        "bronze_ohlcv_kraken_rest_1m",          # kraken
         "bronze_ohlcv_binance_1m",      # binance
     ],
     description="Silver OHLCV ETH 1m from Kraken + Binance",
@@ -167,6 +167,8 @@ def fact_ohlcv_eth_1m(context: AssetExecutionContext) -> None:
             f"Silver validation failed for {window_start} → {window_end} | "
             f"kraken_rows={kraken_rows}, binance_rows={binance_rows}"
         )
+    success_msg = f"success: {kraken_rows} kraken rows uploaded : {binance_rows} binance rows uploaded"
+    send_slack_message(text=success_msg)
 
     context.add_output_metadata(
         {
