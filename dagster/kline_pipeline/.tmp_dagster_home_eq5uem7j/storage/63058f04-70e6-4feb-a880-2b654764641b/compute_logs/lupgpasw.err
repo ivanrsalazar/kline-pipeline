@@ -1,6 +1,0 @@
-[32m2025-12-21 08:05:21 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1782384 - LOGS_CAPTURED - Started capturing logs in process (pid: 1782384).
-[32m2025-12-21 08:05:21 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1782384 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
-[32m2025-12-21 08:05:21 +0000[0m - dagster - [34mINFO[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - fact_ohlcv_kraken_eth_1m - Silver merge Kraken ETH-USD | 2025-12-21 07:00:00 → 2025-12-21 08:00:00
-[32m2025-12-21 08:05:24 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1782384 - fact_ohlcv_kraken_eth_1m - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
-[32m2025-12-21 08:05:24 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1782384 - fact_ohlcv_kraken_eth_1m - ASSET_MATERIALIZATION - Materialized value fact_ohlcv_kraken_eth_1m.
-[32m2025-12-21 08:05:24 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 63058f04-70e6-4feb-a880-2b654764641b - 1782384 - fact_ohlcv_kraken_eth_1m - STEP_SUCCESS - Finished execution of step "fact_ohlcv_kraken_eth_1m" in 3.15s.

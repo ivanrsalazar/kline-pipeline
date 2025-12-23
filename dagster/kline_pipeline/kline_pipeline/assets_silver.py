@@ -16,13 +16,10 @@ USING (
       *,
       ROW_NUMBER() OVER (
         PARTITION BY exchange, symbol, interval_seconds, interval_start
-        ORDER BY
-          -- Prefer final candles if present
-          ingestion_ts DESC
+        ORDER BY ingestion_ts DESC
       ) AS rn
     FROM `kline-pipeline.market_data.bronze_ohlcv_native`
-    WHERE exchange = 'kraken'
-      AND symbol = 'ETH-USD'
+    WHERE exchange IN ('kraken', 'binance')
       AND interval_seconds = 60
       AND interval_start >= @window_start
       AND interval_start <  @window_end
@@ -31,7 +28,6 @@ USING (
   SELECT
     exchange,
     symbol,
-    'USD' AS quote_asset,
     interval_seconds,
     interval_start,
     interval_end,
@@ -40,7 +36,6 @@ USING (
     low,
     close,
     volume,
-    NULL AS quote_volume,
     trade_count,
     vwap,
     source,
@@ -63,7 +58,6 @@ WHEN MATCHED THEN
     low           = S.low,
     close         = S.close,
     volume        = S.volume,
-    quote_volume  = S.quote_volume,
     trade_count   = S.trade_count,
     vwap          = S.vwap,
     source        = S.source,
@@ -73,7 +67,6 @@ WHEN NOT MATCHED THEN
   INSERT (
     exchange,
     symbol,
-    quote_asset,
     interval_seconds,
     interval_start,
     interval_end,
@@ -82,7 +75,6 @@ WHEN NOT MATCHED THEN
     low,
     close,
     volume,
-    quote_volume,
     trade_count,
     vwap,
     source,
@@ -91,7 +83,6 @@ WHEN NOT MATCHED THEN
   VALUES (
     S.exchange,
     S.symbol,
-    S.quote_asset,
     S.interval_seconds,
     S.interval_start,
     S.interval_end,
@@ -100,7 +91,6 @@ WHEN NOT MATCHED THEN
     S.low,
     S.close,
     S.volume,
-    S.quote_volume,
     S.trade_count,
     S.vwap,
     S.source,
@@ -109,31 +99,37 @@ WHEN NOT MATCHED THEN
 """
 
 SILVER_COUNT_SQL = f"""
-SELECT COUNT(*) AS row_count
-FROM `{PROJECT_ID}.{DATASET}.fact_ohlcv`
-WHERE exchange = 'kraken'
-  AND symbol = 'ETH-USD'
-  AND interval_seconds = 60
+SELECT
+  COUNTIF(exchange = 'kraken')  AS kraken_rows,
+  COUNTIF(exchange = 'binance') AS binance_rows
+FROM `kline-pipeline.market_data.fact_ohlcv`
+WHERE interval_seconds = 60
   AND interval_start >= @window_start
   AND interval_start <  @window_end
 """
 
 @asset(
-    name="fact_ohlcv_kraken_eth_1m",
+    name="fact_ohlcv_eth_1m",
     partitions_def=hourly_partitions,
-    deps=["bronze_ohlcv_native"],
-    description="Silver OHLCV from native bronze",
+    deps=[
+        "bronze_ohlcv_native",          # kraken
+        "bronze_ohlcv_binance_1m",      # binance
+    ],
+    description="Silver OHLCV ETH 1m from Kraken + Binance",
 )
-def fact_ohlcv_kraken_eth_1m(context: AssetExecutionContext) -> None:
+def fact_ohlcv_eth_1m(context: AssetExecutionContext) -> None:
     client = bigquery.Client(project=PROJECT_ID)
 
     window_start = datetime.fromisoformat(context.partition_key)
     window_end = window_start + timedelta(hours=1)
 
     context.log.info(
-        f"Silver merge Kraken ETH-USD | {window_start} → {window_end}"
+        f"Silver merge ETH 1m | {window_start} → {window_end}"
     )
 
+    # -------------------------
+    # Run MERGE
+    # -------------------------
     merge_job = client.query(
         MERGE_SQL,
         job_config=bigquery.QueryJobConfig(
@@ -145,7 +141,11 @@ def fact_ohlcv_kraken_eth_1m(context: AssetExecutionContext) -> None:
     )
     merge_job.result()
 
-    # ✅ VALIDATION STEP
+    # -------------------------
+    # VALIDATION (per exchange)
+    # ------------------------- 
+    # after merge_job.result()
+
     count_job = client.query(
         SILVER_COUNT_SQL,
         job_config=bigquery.QueryJobConfig(
@@ -156,18 +156,29 @@ def fact_ohlcv_kraken_eth_1m(context: AssetExecutionContext) -> None:
         ),
     )
 
-    row_count = list(count_job.result())[0]["row_count"]
+    rows = list(count_job.result())
+    row = rows[0]
 
-    if row_count == 0:
+    kraken_rows = row["kraken_rows"]
+    binance_rows = row["binance_rows"]
+
+    if kraken_rows == 0 or binance_rows == 0:
         raise Exception(
-            f"Silver validation failed: no rows for {window_start} → {window_end}"
+            f"Silver validation failed for {window_start} → {window_end} | "
+            f"kraken_rows={kraken_rows}, binance_rows={binance_rows}"
         )
 
     context.add_output_metadata(
         {
             "window_start": str(window_start),
             "window_end": str(window_end),
-            "rows_present": row_count,
+            "kraken_rows": kraken_rows,
+            "binance_rows": binance_rows,
             "job_id": merge_job.job_id,
         }
     )
+
+    
+             
+
+    

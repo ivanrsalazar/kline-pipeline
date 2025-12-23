@@ -16,7 +16,7 @@ def retry_stale_failed_partitions(context):
         asset_key = record.asset_entry.asset_key
 
         # Only care about this asset
-        if asset_key.path[-1] != "fact_ohlcv_kraken_eth_1m":
+        if asset_key.path[-1] != "fact_ohlcv_eth_1m":
             continue
 
         last_materialization = record.asset_entry.last_materialization

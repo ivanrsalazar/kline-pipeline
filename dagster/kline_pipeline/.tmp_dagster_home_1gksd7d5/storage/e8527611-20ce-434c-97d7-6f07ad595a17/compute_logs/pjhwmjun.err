@@ -1,6 +1,0 @@
-[32m2025-12-21 00:24:34 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - e8527611-20ce-434c-97d7-6f07ad595a17 - 1341466 - LOGS_CAPTURED - Started capturing logs in process (pid: 1341466).
-[32m2025-12-21 00:24:34 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - e8527611-20ce-434c-97d7-6f07ad595a17 - 1341466 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
-[32m2025-12-21 00:24:34 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - e8527611-20ce-434c-97d7-6f07ad595a17 - fact_ohlcv_kraken_eth_1m - Running MERGE for Kraken ETH-USD 1m
-[32m2025-12-21 00:24:38 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - e8527611-20ce-434c-97d7-6f07ad595a17 - 1341466 - fact_ohlcv_kraken_eth_1m - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
-[32m2025-12-21 00:24:38 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - e8527611-20ce-434c-97d7-6f07ad595a17 - 1341466 - fact_ohlcv_kraken_eth_1m - ASSET_MATERIALIZATION - Materialized value fact_ohlcv_kraken_eth_1m.
-[32m2025-12-21 00:24:38 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - e8527611-20ce-434c-97d7-6f07ad595a17 - 1341466 - fact_ohlcv_kraken_eth_1m - STEP_SUCCESS - Finished execution of step "fact_ohlcv_kraken_eth_1m" in 3.82s.

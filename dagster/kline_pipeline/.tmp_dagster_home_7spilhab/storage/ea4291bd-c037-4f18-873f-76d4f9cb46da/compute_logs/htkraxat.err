@@ -1,7 +1,0 @@
-[32m2025-12-20 10:26:20 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - ea4291bd-c037-4f18-873f-76d4f9cb46da - 534769 - LOGS_CAPTURED - Started capturing logs in process (pid: 534769).
-[32m2025-12-20 10:26:20 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - ea4291bd-c037-4f18-873f-76d4f9cb46da - 534769 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
-[32m2025-12-20 10:26:20 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - ea4291bd-c037-4f18-873f-76d4f9cb46da - fact_ohlcv_kraken_eth_1m - Processing partition 2025-12-20-09:00: 2025-12-20T09:00:00+00:00 → 2025-12-20T10:00:00+00:00
-[32m2025-12-20 10:26:20 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - ea4291bd-c037-4f18-873f-76d4f9cb46da - fact_ohlcv_kraken_eth_1m - Running BigQuery MERGE
-[32m2025-12-20 10:26:22 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - ea4291bd-c037-4f18-873f-76d4f9cb46da - 534769 - fact_ohlcv_kraken_eth_1m - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
-[32m2025-12-20 10:26:22 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - ea4291bd-c037-4f18-873f-76d4f9cb46da - 534769 - fact_ohlcv_kraken_eth_1m - ASSET_MATERIALIZATION - Materialized value fact_ohlcv_kraken_eth_1m.
-[32m2025-12-20 10:26:22 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - ea4291bd-c037-4f18-873f-76d4f9cb46da - 534769 - fact_ohlcv_kraken_eth_1m - STEP_SUCCESS - Finished execution of step "fact_ohlcv_kraken_eth_1m" in 2.91s.

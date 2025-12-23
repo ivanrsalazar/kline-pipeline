@@ -1,6 +1,0 @@
-[32m2025-12-21 04:05:16 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 0539bef2-2d1d-43ed-bdd9-efe7def32097 - 1551923 - LOGS_CAPTURED - Started capturing logs in process (pid: 1551923).
-[32m2025-12-21 04:05:16 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 0539bef2-2d1d-43ed-bdd9-efe7def32097 - 1551923 - bronze_ohlcv_native - STEP_RESTARTED - Started re-execution (attempt # 2) of step "bronze_ohlcv_native".
-[32m2025-12-21 04:05:16 +0000[0m - dagster - [34mINFO[0m - hourly_assets_job - 0539bef2-2d1d-43ed-bdd9-efe7def32097 - bronze_ohlcv_native - Bronze ingest Kraken ETH-USD | 2025-12-21 03:00:00+00:00 → 2025-12-21 04:00:00+00:00
-[32m2025-12-21 04:05:20 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 0539bef2-2d1d-43ed-bdd9-efe7def32097 - 1551923 - bronze_ohlcv_native - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
-[32m2025-12-21 04:05:20 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 0539bef2-2d1d-43ed-bdd9-efe7def32097 - 1551923 - bronze_ohlcv_native - ASSET_MATERIALIZATION - Materialized value bronze_ohlcv_native.
-[32m2025-12-21 04:05:20 +0000[0m - dagster - [34mDEBUG[0m - hourly_assets_job - 0539bef2-2d1d-43ed-bdd9-efe7def32097 - 1551923 - bronze_ohlcv_native - STEP_SUCCESS - Finished execution of step "bronze_ohlcv_native" in 3.86s.

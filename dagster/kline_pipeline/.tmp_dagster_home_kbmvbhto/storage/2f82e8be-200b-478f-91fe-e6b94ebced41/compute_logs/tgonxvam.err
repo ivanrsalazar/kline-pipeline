@@ -1,6 +1,0 @@
-[32m2025-12-20 08:14:29 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 2f82e8be-200b-478f-91fe-e6b94ebced41 - 406690 - LOGS_CAPTURED - Started capturing logs in process (pid: 406690).
-[32m2025-12-20 08:14:29 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 2f82e8be-200b-478f-91fe-e6b94ebced41 - 406690 - fact_ohlcv_kraken_eth_1m - STEP_START - Started execution of step "fact_ohlcv_kraken_eth_1m".
-[32m2025-12-20 08:14:29 +0000[0m - dagster - [34mINFO[0m - __ASSET_JOB - 2f82e8be-200b-478f-91fe-e6b94ebced41 - fact_ohlcv_kraken_eth_1m - Processing hour: 2025-12-20 07:00:00 → 2025-12-20 08:00:00
-[32m2025-12-20 08:14:32 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 2f82e8be-200b-478f-91fe-e6b94ebced41 - 406690 - fact_ohlcv_kraken_eth_1m - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
-[32m2025-12-20 08:14:32 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 2f82e8be-200b-478f-91fe-e6b94ebced41 - 406690 - fact_ohlcv_kraken_eth_1m - ASSET_MATERIALIZATION - Materialized value fact_ohlcv_kraken_eth_1m.
-[32m2025-12-20 08:14:32 +0000[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 2f82e8be-200b-478f-91fe-e6b94ebced41 - 406690 - fact_ohlcv_kraken_eth_1m - STEP_SUCCESS - Finished execution of step "fact_ohlcv_kraken_eth_1m" in 2.93s.

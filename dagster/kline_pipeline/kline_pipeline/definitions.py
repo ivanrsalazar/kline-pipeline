@@ -2,7 +2,7 @@
 from dagster import Definitions
 
 from .assets_bronze import bronze_ohlcv_native
-from .assets_silver import fact_ohlcv_kraken_eth_1m
+from .assets_silver import fact_ohlcv_eth_1m
 from .assets_bronze_binance import bronze_ohlcv_binance_1m
 
 from .jobs import hourly_assets_job
@@ -13,7 +13,7 @@ defs = Definitions(
     assets=[
         bronze_ohlcv_binance_1m,
         bronze_ohlcv_native,
-        fact_ohlcv_kraken_eth_1m,
+        fact_ohlcv_eth_1m,
     ],
     jobs=[hourly_assets_job],
     schedules=[hourly_schedule],
