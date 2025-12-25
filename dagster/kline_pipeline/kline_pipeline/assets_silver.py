@@ -99,7 +99,7 @@ GROUP BY exchange
     partitions_def=hourly_partitions,
     deps=[
         "bronze_ohlcv_kraken_rest_1m",
-        "bronze_ohlcv_binance_1m",
+        "bronze_ohlcv_binance_rest_1m"
     ],
     description="Silver ETH 1m OHLCV (rolling reconciliation)",
 )
