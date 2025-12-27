@@ -9,6 +9,7 @@ from .assets_bronze_binance import bronze_ohlcv_binance_1m
 from .assets_bronze_binance_rest import bronze_ohlcv_binance_rest_1m
 from .assets_bronze_kraken_rest import bronze_ohlcv_kraken_rest_1m
 from .assets_silver import fact_ohlcv_eth_1m
+from .dummy_asset import dummy_asset
 
 # --------------------
 # ASSETS (v2 / factory)
@@ -50,6 +51,7 @@ defs = Definitions(
         bronze_ohlcv_kraken_rest_1m,
         bronze_ohlcv_native,
         fact_ohlcv_eth_1m,
+        dummy_asset,
 
         # ---------- v2 ----------
         *bronze_ext_assets_v2,

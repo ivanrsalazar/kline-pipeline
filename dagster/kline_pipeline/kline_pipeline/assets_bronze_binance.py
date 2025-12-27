@@ -58,6 +58,7 @@ WHERE exchange = 'binance'
     name="bronze_ohlcv_binance_1m",
     partitions_def=hourly_partitions,
     retry_policy=RetryPolicy(max_retries=5, delay=300),
+    deps=["dummy_asset"],
     description="Load Binance ETHUSDT 1m OHLCV into native bronze (validated)",
 )
 def bronze_ohlcv_binance_1m(context: AssetExecutionContext) -> None:

@@ -1,82 +1,185 @@
 from dagster import asset, AssetExecutionContext
-from google.cloud import bigquery
+import boto3
+import json
+import psycopg2
+from psycopg2.extras import execute_batch
+from datetime import datetime, timedelta, timezone
+import os
 
-PROJECT_ID = "kline-pipeline"
-DATASET = "market_data"
+PG_DSN = os.environ["PG_DSN"]
+S3_BUCKET = "kline-pipeline-bronze"
 
 
 def make_ext_to_bronze_asset(
     *,
     exchange: str,
-    ext_table: str,
-    native_table: str,
+    s3_prefix: str,  # bucket-relative, up to interval_minutes=1
 ):
-    """
-    EXT → native bronze ingestion
-
-    Assumes:
-    - ext_table has JSON payloads + partition columns
-    - native_table is typed and stable
-    """
-
-    INSERT_SQL = f"""
-    INSERT INTO `{PROJECT_ID}.{DATASET}.{native_table}` (
-        exchange,
-        symbol,
-        interval_seconds,
-        interval_start,
-        interval_end,
-        open,
-        high,
-        low,
-        close,
-        volume,
-        vwap,
-        trade_count,
-        source,
-        ingestion_ts
-    )
-    SELECT
-        exchange,
-        symbol,
-        interval_minutes * 60 AS interval_seconds,
-        interval_start,
-        interval_end,
-
-        CAST(JSON_VALUE(payload, '$.data[0].open')   AS FLOAT64) AS open,
-        CAST(JSON_VALUE(payload, '$.data[0].high')   AS FLOAT64) AS high,
-        CAST(JSON_VALUE(payload, '$.data[0].low')    AS FLOAT64) AS low,
-        CAST(JSON_VALUE(payload, '$.data[0].close')  AS FLOAT64) AS close,
-        CAST(JSON_VALUE(payload, '$.data[0].volume') AS FLOAT64) AS volume,
-        CAST(JSON_VALUE(payload, '$.data[0].vwap')   AS FLOAT64) AS vwap,
-        CAST(JSON_VALUE(payload, '$.data[0].trades') AS INT64)   AS trade_count,
-
-        CONCAT(exchange, '_ws') AS source,
-        CURRENT_TIMESTAMP() AS ingestion_ts
-
-    FROM `{PROJECT_ID}.{DATASET}.{ext_table}`
-    WHERE exchange = '{exchange}';
-    """
+    asset_name = f"bronze_ohlcv_native_{exchange}_1m_v2"
 
     @asset(
-        name=f"{native_table}_{exchange}_1m_v2",
-        description=f"EXT → native bronze OHLCV ({exchange})",
+        name=asset_name,
+        description=f"S3 → bronze native OHLCV ({exchange})",
+        group_name="bronze_native_v2",
     )
     def _asset(context: AssetExecutionContext) -> None:
-        client = bigquery.Client(project=PROJECT_ID)
+        s3 = boto3.client("s3")
+        conn = psycopg2.connect(PG_DSN)
+        cur = conn.cursor()
 
-        context.log.info(
-            f"Running EXT → bronze ingest | exchange={exchange}"
+        # -------------------------------------------------
+        # Determine LAST COMPLETED UTC HOUR
+        # -------------------------------------------------
+        hour = (
+            datetime.now(tz=timezone.utc)
+            .replace(minute=0, second=0, microsecond=0)
+            - timedelta(hours=1)
         )
 
-        job = client.query(INSERT_SQL)
-        job.result()
+        hour_prefix = (
+            f"{s3_prefix}/"
+            f"year={hour:%Y}/"
+            f"month={hour:%m}/"
+            f"day={hour:%d}/"
+            f"hour={hour:%H}/"
+        )
+
+        context.log.info(
+            f"S3 → bronze ingest | exchange={exchange} | hour={hour.isoformat()}"
+        )
+        context.log.info(
+            f"Reading Hive partition: s3://{S3_BUCKET}/{hour_prefix}"
+        )
+
+        rows = []
+        objects_seen = 0
+        continuation_token = None
+
+        # -------------------------------------------------
+        # List + read ALL part_*.jsonl files for that hour
+        # -------------------------------------------------
+        while True:
+            kwargs = {
+                "Bucket": S3_BUCKET,
+                "Prefix": hour_prefix,
+            }
+            if continuation_token:
+                kwargs["ContinuationToken"] = continuation_token
+
+            resp = s3.list_objects_v2(**kwargs)
+
+            for obj in resp.get("Contents", []):
+                objects_seen += 1
+                body = s3.get_object(
+                    Bucket=S3_BUCKET,
+                    Key=obj["Key"],
+                )["Body"]
+
+                for line in body.iter_lines():
+                    rec = json.loads(line.decode("utf-8"))
+
+                    # -------------------------------
+                    # Exchange-aware payload parsing
+                    # -------------------------------
+                    if exchange == "kraken":
+                        d = rec["payload"]["data"][0]
+
+                        open_ = d["open"]
+                        high = d["high"]
+                        low = d["low"]
+                        close = d["close"]
+                        volume = d["volume"]
+                        vwap = d["vwap"]
+                        trades = d["trades"]
+
+                    elif exchange == "binance":
+                        k = rec["payload"]["k"]
+
+                        open_ = float(k["o"])
+                        high = float(k["h"])
+                        low = float(k["l"])
+                        close = float(k["c"])
+                        volume = float(k["v"])
+                        trades = int(k["n"])
+
+                        # Binance does not provide VWAP directly
+                        quote_volume = float(k["q"])
+                        vwap = (
+                            quote_volume / volume
+                            if volume > 0
+                            else None
+                        )
+
+                    else:
+                        raise ValueError(
+                            f"Unsupported exchange: {exchange}"
+                        )
+
+                    rows.append(
+                        (
+                            exchange,
+                            rec["symbol"].replace("/", ""),
+                            rec["interval_minutes"] * 60,
+                            rec["interval_start"],
+                            rec["interval_end"],
+                            open_,
+                            high,
+                            low,
+                            close,
+                            volume,
+                            vwap,
+                            trades,
+                            f"{exchange}_ws",
+                            rec["event_ts"],
+                        )
+                    )
+
+            if not resp.get("IsTruncated"):
+                break
+
+            continuation_token = resp["NextContinuationToken"]
+
+        context.log.info(
+            f"Hive ingest complete | objects={objects_seen} rows={len(rows)}"
+        )
+
+        # -------------------------------------------------
+        # Skip empty hours safely
+        # -------------------------------------------------
+        if not rows:
+            context.log.warning(
+                "No rows found for this hour — skipping insert"
+            )
+            cur.close()
+            conn.close()
+            return
+
+        # -------------------------------------------------
+        # Insert into Postgres
+        # -------------------------------------------------
+        sql = """
+        INSERT INTO bronze.bronze_ohlcv_native (
+            exchange, symbol, interval_seconds,
+            interval_start, interval_end,
+            open, high, low, close,
+            volume, vwap, trade_count,
+            source, ingestion_ts
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """
+
+        execute_batch(cur, sql, rows, page_size=1000)
+        conn.commit()
 
         context.add_output_metadata(
             {
-                "job_id": job.job_id,
-                "bytes_processed": job.total_bytes_processed,
+                "rows_inserted": len(rows),
+                "s3_objects": objects_seen,
+                "hour": hour.isoformat(),
             }
         )
+
+        cur.close()
+        conn.close()
 
     return _asset

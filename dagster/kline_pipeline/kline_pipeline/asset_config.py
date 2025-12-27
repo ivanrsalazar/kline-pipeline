@@ -1,26 +1,18 @@
-# asset_config.py
-
 EXCHANGES = {
+    "binance": {
+        "symbols": {
+            "ETH-USD": {
+                "rest_pair": "ETHUSDT",
+                "ws_pair": "ethusdt",
+            }
+        }
+    },
     "kraken": {
         "symbols": {
             "ETH-USD": {
                 "rest_pair": "ETH/USD",
-                "interval_seconds": 60,
-            },
-            "SOL-USD": {
-                "rest_pair": "SOL/USD",
-                "interval_seconds": 60,
-            },
+                "ws_pair": "eth/usd",
+            }
         }
-    },
-    "binance": {
-        "symbols": {
-            "ETHUSDT": {
-                "interval_seconds": 60,
-            },
-            "SOLUSDT": {
-                "interval_seconds": 60,
-            },
-        }
-    },
+    }
 }

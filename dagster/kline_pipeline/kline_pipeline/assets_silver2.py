@@ -5,7 +5,7 @@ from .factories.assets_silver_factory import make_silver_asset
 
 silver_assets = []
 
-for symbol in {"ETH-USD", "SOL-USD"}:
+for symbol in {"ETH-USD"}:
     exchanges = [
         ex for ex, cfg in EXCHANGES.items()
         if symbol in cfg["symbols"]

@@ -7,12 +7,13 @@ from .partitions import hourly_partitions
 v2_hourly_assets_job = define_asset_job(
     name="v2_hourly_assets_job",
     partitions_def=hourly_partitions,
-    selection=AssetSelection.keys(
+    selection=(
         # ---- EXT → BRONZE (native bronze v2)
-        "bronze_ohlcv_native_binance_1m_v2",
-        "bronze_ohlcv_native_kraken_1m_v2",
+        AssetSelection.groups("bronze_native_v2") |
 
+        # ---- REST Backfill -> BRONZE (native bronze v2)
+        AssetSelection.groups("bronze_rest_v2") |
         # ---- SILVER
-        "fact_ohlcv_eth_1m",
+        AssetSelection.groups("silver_v2")
     ),
 )

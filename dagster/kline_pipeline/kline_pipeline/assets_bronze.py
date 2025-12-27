@@ -46,6 +46,7 @@ WHERE exchange = 'kraken'
     name="bronze_ohlcv_native",
     partitions_def=hourly_partitions,
     retry_policy=RetryPolicy(max_retries=5, delay=300),
+    deps=["dummy_asset"],
     description="Load Kraken ETH-USD 1m OHLCV from ext → native bronze",
 )
 def bronze_ohlcv_native(context: AssetExecutionContext) -> None:
