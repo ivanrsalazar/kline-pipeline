@@ -21,9 +21,6 @@ def get_ws_missing_minutes(
     window_start: datetime,
     window_end: datetime,
 ) -> set[datetime]:
-    symbol_filter = symbol.replace("-", "")
-    if exchange == "binance":
-        symbol_filter += "T"
 
     ws_source = f"{exchange}_ws"
 
@@ -51,7 +48,7 @@ def get_ws_missing_minutes(
             window_start,
             window_end - timedelta(minutes=1),
             exchange,
-            symbol_filter,
+            symbol.replace('/',""),
             ws_source,
             window_start,
             window_end,
@@ -70,7 +67,7 @@ def make_bronze_rest_asset(exchange: str, symbol: str, rest_pair: str):
     @asset(
         name=asset_name,
         partitions_def=hourly_partitions,
-        deps=[f"bronze_ohlcv_native_{exchange}_1m_v2"],
+        deps=[f"bronze_ohlcv_native_{exchange}_{rest_pair.replace("/","").lower()}_1m_v2"],
         description=f"{exchange.upper()} REST WS-gap fill {symbol} 1m",
         group_name="bronze_rest_v2",
     )
@@ -87,7 +84,7 @@ def make_bronze_rest_asset(exchange: str, symbol: str, rest_pair: str):
         window_start = window_end - timedelta(hours=2)
 
         ws_missing = get_ws_missing_minutes(
-            cur, exchange, symbol, window_start, window_end
+            cur, exchange, rest_pair, window_start, window_end
         )
 
         if not ws_missing:

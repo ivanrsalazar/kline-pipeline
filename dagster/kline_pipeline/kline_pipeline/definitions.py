@@ -38,7 +38,7 @@ v2_hourly_schedule = build_schedule_from_partitioned_job(
 # --------------------
 # SENSORS
 # --------------------
-from .sensors import retry_stale_failed_partitions
+from .sensors import backfill_missing_ohlcv_partitions
 
 # --------------------
 # DEFINITIONS
@@ -67,6 +67,6 @@ defs = Definitions(
         v2_hourly_schedule,
     ],
     sensors=[
-        retry_stale_failed_partitions,
+        backfill_missing_ohlcv_partitions
     ],
 )

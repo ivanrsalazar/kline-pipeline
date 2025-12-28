@@ -6,9 +6,7 @@ import requests
 
 LOOKBACK_MINUTES = 120
 
-SYMBOL_MAP = {
-    "ETH/USD": "ETHUSD",
-}
+
 
 
 def fetch_rest_rows(
@@ -110,7 +108,7 @@ def fetch_kraken_ohlc(
         for t in ticks:
             interval_start = datetime.fromtimestamp(t[0], tz=timezone.utc)
             interval_end = interval_start + timedelta(minutes=1)
-
+            clean_pair = pair.replace("/","")
             # Enforce window bounds explicitly
             if interval_start < window_start:
                 continue
@@ -118,7 +116,7 @@ def fetch_kraken_ohlc(
             rows.append(
                 (
                     "kraken",                 # exchange
-                    SYMBOL_MAP[pair],         # symbol (exchange-native)
+                    clean_pair,         # symbol (exchange-native)
                     60,                       # interval_seconds
                     interval_start,           # interval_start
                     interval_end,             # interval_end

@@ -6,6 +6,7 @@ from .partitions import hourly_partitions
     name="dummy_asset",
     partitions_def=hourly_partitions,
     retry_policy=RetryPolicy(max_retries=5, delay=180),
+    group_name="dummy",
     description="3 minute delay for ingestion",
 )
 def dummy_asset(context: AssetExecutionContext) -> None:
@@ -13,7 +14,7 @@ def dummy_asset(context: AssetExecutionContext) -> None:
         context.partition_key, "%Y-%m-%d-%H:%M"
     ).replace(tzinfo=timezone.utc)
 
-    ready_time = hour_start + timedelta(minutes=3)
+    ready_time = hour_start + timedelta(minutes=3) + timedelta(hours=1)
     now = datetime.now(timezone.utc)
     if now < ready_time:
         raise Exception(

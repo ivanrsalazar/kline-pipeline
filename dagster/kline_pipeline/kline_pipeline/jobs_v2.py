@@ -9,6 +9,9 @@ v2_hourly_assets_job = define_asset_job(
     partitions_def=hourly_partitions,
     selection=(
         # ---- EXT → BRONZE (native bronze v2)
+        AssetSelection.groups("dummy") |
+
+        # ---- EXT → BRONZE (native bronze v2)
         AssetSelection.groups("bronze_native_v2") |
 
         # ---- REST Backfill -> BRONZE (native bronze v2)

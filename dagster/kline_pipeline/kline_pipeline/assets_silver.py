@@ -107,7 +107,7 @@ def fact_ohlcv_eth_1m(context: AssetExecutionContext) -> None:
     client = bigquery.Client(project=PROJECT_ID)
 
     partition_start = datetime.fromisoformat(context.partition_key)
-    partition_end = partition_start + timedelta(hours=1)
+    partition_end = partition_start + timedelta(hours=2)
 
     merge_start = partition_start - timedelta(minutes=ROLLING_LOOKBACK_MINUTES)
     merge_end = partition_end

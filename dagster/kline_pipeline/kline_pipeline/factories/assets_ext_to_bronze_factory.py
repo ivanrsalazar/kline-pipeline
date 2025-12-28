@@ -13,14 +13,16 @@ S3_BUCKET = "kline-pipeline-bronze"
 def make_ext_to_bronze_asset(
     *,
     exchange: str,
+    symbol: str,
     s3_prefix: str,  # bucket-relative, up to interval_minutes=1
 ):
-    asset_name = f"bronze_ohlcv_native_{exchange}_1m_v2"
+    asset_name = f"bronze_ohlcv_native_{exchange}_{symbol}_1m_v2"
 
     @asset(
         name=asset_name,
         description=f"S3 → bronze native OHLCV ({exchange})",
         group_name="bronze_native_v2",
+        deps=["dummy_asset"],
     )
     def _asset(context: AssetExecutionContext) -> None:
         s3 = boto3.client("s3")
@@ -53,6 +55,7 @@ def make_ext_to_bronze_asset(
 
         rows = []
         objects_seen = 0
+        skipped = 0
         continuation_token = None
 
         # -------------------------------------------------
@@ -77,12 +80,59 @@ def make_ext_to_bronze_asset(
 
                 for line in body.iter_lines():
                     rec = json.loads(line.decode("utf-8"))
+                    payload = rec.get("payload", {})
 
-                    # -------------------------------
-                    # Exchange-aware payload parsing
-                    # -------------------------------
-                    if exchange == "kraken":
-                        d = rec["payload"]["data"][0]
+                    # -----------------------------------------
+                    # Binance parsing (final candles only)
+                    # -----------------------------------------
+                    if exchange == "binance":
+                        k = payload.get("k")
+                        if not k:
+                            skipped += 1
+                            continue
+
+                        # Only final candles
+                        if not k.get("x", False):
+                            skipped += 1
+                            continue
+
+                        volume = float(k["v"])
+                        quote_volume = float(k.get("q", 0))
+
+                        open_ = float(k["o"])
+                        high = float(k["h"])
+                        low = float(k["l"])
+                        close = float(k["c"])
+                        trades = int(k["n"])
+                        vwap = (
+                            quote_volume / volume
+                            if volume > 0
+                            else None
+                        )
+
+                    # -----------------------------------------
+                    # Kraken parsing (structural validation)
+                    # -----------------------------------------
+                    elif exchange == "kraken":
+                        data = payload.get("data")
+                        if not data or not isinstance(data, list):
+                            skipped += 1
+                            continue
+
+                        d = data[0]
+                        required = {
+                            "open",
+                            "high",
+                            "low",
+                            "close",
+                            "volume",
+                            "vwap",
+                            "trades",
+                        }
+
+                        if not required.issubset(d):
+                            skipped += 1
+                            continue
 
                         open_ = d["open"]
                         high = d["high"]
@@ -91,24 +141,6 @@ def make_ext_to_bronze_asset(
                         volume = d["volume"]
                         vwap = d["vwap"]
                         trades = d["trades"]
-
-                    elif exchange == "binance":
-                        k = rec["payload"]["k"]
-
-                        open_ = float(k["o"])
-                        high = float(k["h"])
-                        low = float(k["l"])
-                        close = float(k["c"])
-                        volume = float(k["v"])
-                        trades = int(k["n"])
-
-                        # Binance does not provide VWAP directly
-                        quote_volume = float(k["q"])
-                        vwap = (
-                            quote_volume / volume
-                            if volume > 0
-                            else None
-                        )
 
                     else:
                         raise ValueError(
@@ -140,7 +172,8 @@ def make_ext_to_bronze_asset(
             continuation_token = resp["NextContinuationToken"]
 
         context.log.info(
-            f"Hive ingest complete | objects={objects_seen} rows={len(rows)}"
+            f"Hive ingest complete | objects={objects_seen} "
+            f"rows={len(rows)} skipped={skipped}"
         )
 
         # -------------------------------------------------
@@ -148,7 +181,7 @@ def make_ext_to_bronze_asset(
         # -------------------------------------------------
         if not rows:
             context.log.warning(
-                "No rows found for this hour — skipping insert"
+                "No valid rows found for this hour — skipping insert"
             )
             cur.close()
             conn.close()
@@ -174,6 +207,7 @@ def make_ext_to_bronze_asset(
         context.add_output_metadata(
             {
                 "rows_inserted": len(rows),
+                "rows_skipped": skipped,
                 "s3_objects": objects_seen,
                 "hour": hour.isoformat(),
             }

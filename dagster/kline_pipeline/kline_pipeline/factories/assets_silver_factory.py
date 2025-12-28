@@ -9,7 +9,6 @@ from ..asset_keys import bronze_rest_key
 from ..asset_config import EXCHANGES
 
 PG_DSN = os.environ["PG_DSN"]
-ROLLING_LOOKBACK_MINUTES = 180  # covers backfills + current hour
 
 
 def make_silver_asset(symbol: str, exchanges: list[str]):
@@ -31,24 +30,14 @@ def make_silver_asset(symbol: str, exchanges: list[str]):
         conn = psycopg2.connect(PG_DSN)
         cur = conn.cursor()
 
-        # ---------------------------------------------
-        # Define merge window
-        # ---------------------------------------------
-        partition_start = datetime.fromisoformat(
-            context.partition_key
-        ).replace(tzinfo=timezone.utc)
+        # -------------------------------------------------
+        # Rolling merge window (handles late REST backfill)
+        # -------------------------------------------------
+        window_end = datetime.fromisoformat(context.partition_key).replace(
+            tzinfo=timezone.utc
+        ) + timedelta(hours=1)
+        window_start = window_end - timedelta(hours=2)
 
-        window_end = partition_start
-        window_start = window_end - timedelta(minutes=ROLLING_LOOKBACK_MINUTES)
-
-        # ---------------------------------------------
-        # Mark run start (for delta detection)
-        # ---------------------------------------------
-        run_started_at = datetime.now(tz=timezone.utc)
-
-        # ---------------------------------------------
-        # MERGE bronze → silver
-        # ---------------------------------------------
         cur.execute(
             """
             MERGE INTO silver.fact_ohlcv tgt
@@ -131,106 +120,49 @@ def make_silver_asset(symbol: str, exchanges: list[str]):
 
         conn.commit()
 
-        # ---------------------------------------------
-        # Count rows written *this run*, per hour/exchange
-        # ---------------------------------------------
-        cur.execute(
-            """
-            SELECT
-                exchange,
-                date_trunc('hour', interval_start) AS hour,
-                COUNT(*) AS rows_written
-            FROM silver.fact_ohlcv
-            WHERE ingestion_ts >= %s
-              AND interval_start >= %s
-              AND interval_start < %s
-            GROUP BY exchange, hour
-            ORDER BY hour, exchange
-            """,
-            (run_started_at, window_start, window_end),
+        # -------------------------------------------------
+        # Slack: report warehouse state for LAST hour
+        # -------------------------------------------------
+        report_hour_start = (
+            datetime.now(tz=timezone.utc)
+            .replace(minute=0, second=0, microsecond=0)
+            - timedelta(hours=1)
         )
+        report_hour_end = report_hour_start + timedelta(hours=1)
 
-        written = cur.fetchall()
-
-        # ---------------------------------------------
-        # Gap detection per hour
-        # ---------------------------------------------
         cur.execute(
             """
-            SELECT
-                exchange,
-                date_trunc('hour', interval_start) AS hour,
-                COUNT(DISTINCT interval_start) AS candles
+            SELECT exchange, COUNT(*) AS cnt
             FROM silver.fact_ohlcv
             WHERE interval_start >= %s
               AND interval_start < %s
-            GROUP BY exchange, hour
-            ORDER BY hour, exchange
+            GROUP BY exchange
+            ORDER BY exchange
             """,
-            (window_start, window_end),
+            (report_hour_start, report_hour_end),
         )
 
-        completeness = {}
-        for ex, hr, cnt in cur.fetchall():
-            hour_key = hr.isoformat()
-            completeness.setdefault(hour_key, {})[ex] = cnt
+        rows = cur.fetchall()
 
-        # ---------------------------------------------
-        # Build Slack message
-        # ---------------------------------------------
         lines = [
-            f"✅ Silver {symbol} 1m (this run)",
+            f"✅ Silver {symbol} 1m — warehouse state",
+            f"{report_hour_start:%H:%M} → {report_hour_end:%H:%M} UTC",
             "",
         ]
 
-        # Hours touched in THIS run
-        hours = sorted({h for _, h, _ in written})
-
-        if not hours:
-            lines.append("No rows written in this run.")
+        if not rows:
+            lines.append("⚠️ No rows present for this hour")
         else:
-            for hour in hours:
-                hour_key = hour.isoformat()
-
-                lines.append(
-                    f"{hour:%H:%M} → {(hour + timedelta(hours=1)):%H:%M}"
-                )
-
-                for ex in exchanges:
-                    # rows written THIS run
-                    delta = next(
-                        (r for e, h, r in written if e == ex and h == hour),
-                        0,
-                    )
-
-                    # total rows present after merge
-                    total = completeness.get(hour_key, {}).get(ex, 0)
-
-                    status = "✅" if total == 60 else "⚠️"
-
-                    lines.append(
-                        f"  {ex}: +{delta} ({total}/60) {status}"
-                    )
-
-                lines.append("")
+            for exchange, cnt in rows:
+                status = "✅" if cnt == 60 else "⚠️"
+                lines.append(f"{exchange}: {cnt}/60 {status}")
 
         send_slack_message(text="\n".join(lines))
 
-        # ---------------------------------------------
-        # Metadata
-        # ---------------------------------------------
         context.add_output_metadata(
             {
-                "window": f"{window_start.isoformat()} → {window_end.isoformat()}",
-                "rows_written": [
-                    {
-                        "exchange": ex,
-                        "hour": hr.isoformat(),
-                        "rows": rows,
-                    }
-                    for ex, hr, rows in written
-                ],
-                "completeness": completeness,
+                "merge_window": f"{window_start} → {window_end}",
+                "reported_hour": f"{report_hour_start} → {report_hour_end}",
             }
         )
 
