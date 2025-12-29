@@ -156,15 +156,17 @@ def make_bronze_rest_asset(exchange: str, symbol: str, rest_pair: str):
         )
 
         filled = cur.fetchone()[0]
-
+        # Disabled slack messge
+        '''
         if filled == 0:
             send_slack_message(
                 f"⚠️ {exchange} REST returned data but none inserted {symbol}"
             )
         else:
             send_slack_message(
-                f"✅ {exchange} REST WS-gap fill OK {symbol} filled={filled}"
+                f"✅ RESTfill OK {exchange} : {symbol} fill={filled}"
             )
+        '''
 
         context.add_output_metadata(
             {

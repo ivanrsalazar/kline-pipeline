@@ -10,6 +10,15 @@ from ..asset_config import EXCHANGES
 
 PG_DSN = os.environ["PG_DSN"]
 
+def warehouse_symbol(exchange: str, symbol: str) -> str:
+    """
+    Convert canonical symbol (BTC-USD) into warehouse symbol
+    """
+    base = symbol.replace("-", "")
+    if exchange == "binance":
+        return f"{base}T"  # BTCUSD -> BTCUSDT
+    return base             # Kraken: BTCUSD
+
 
 def make_silver_asset(symbol: str, exchanges: list[str]):
     asset_name = f"fact_ohlcv_{symbol.lower().replace('-', '')}_1m_v2"
@@ -121,7 +130,7 @@ def make_silver_asset(symbol: str, exchanges: list[str]):
         conn.commit()
 
         # -------------------------------------------------
-        # Slack: report warehouse state for LAST hour
+        # Slack: report warehouse state for THIS trading pair
         # -------------------------------------------------
         report_hour_start = (
             datetime.now(tz=timezone.utc)
@@ -130,39 +139,46 @@ def make_silver_asset(symbol: str, exchanges: list[str]):
         )
         report_hour_end = report_hour_start + timedelta(hours=1)
 
-        cur.execute(
-            """
-            SELECT exchange, COUNT(*) AS cnt
-            FROM silver.fact_ohlcv
-            WHERE interval_start >= %s
-              AND interval_start < %s
-            GROUP BY exchange
-            ORDER BY exchange
-            """,
-            (report_hour_start, report_hour_end),
-        )
+        results = []
 
-        rows = cur.fetchall()
+        for ex in exchanges:
+            wh_symbol = warehouse_symbol(ex, symbol)
 
+            cur.execute(
+                """
+                SELECT COUNT(DISTINCT interval_start)
+                FROM silver.fact_ohlcv
+                WHERE exchange = %s
+                AND symbol = %s
+                AND interval_start >= %s
+                AND interval_start < %s
+                """,
+                (ex, wh_symbol, report_hour_start, report_hour_end),
+            )
+
+            cnt = cur.fetchone()[0]
+            results.append((ex, wh_symbol, cnt))
+
+        # -------------------------------------------------
+        # Build Slack message
+        # -------------------------------------------------
         lines = [
-            f"✅ Silver {symbol} 1m — warehouse state",
+            f"✅ Silver {symbol} 1m : WH state",
             f"{report_hour_start:%H:%M} → {report_hour_end:%H:%M} UTC",
             "",
         ]
 
-        if not rows:
-            lines.append("⚠️ No rows present for this hour")
-        else:
-            for exchange, cnt in rows:
-                status = "✅" if cnt == 60 else "⚠️"
-                lines.append(f"{exchange}: {cnt}/60 {status}")
+        for ex, sym, cnt in results:
+            status = "✅" if cnt == 60 else "⚠️"
+            lines.append(f"{ex} {sym}: {cnt}/60 {status}")
 
         send_slack_message(text="\n".join(lines))
 
         context.add_output_metadata(
             {
-                "merge_window": f"{window_start} → {window_end}",
-                "reported_hour": f"{report_hour_start} → {report_hour_end}",
+                "reported_hour_start": report_hour_start.isoformat(),
+                "reported_hour_end": report_hour_end.isoformat(),
+                "exchanges_checked": exchanges,
             }
         )
 
