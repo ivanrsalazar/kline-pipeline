@@ -16,6 +16,8 @@ def warehouse_symbol(exchange: str, symbol: str) -> str:
     """
     base = symbol.replace("-", "")
     if exchange == "binance":
+        if symbol == 'REKT':
+            return f"1000{base}T"
         return f"{base}T"  # BTCUSD -> BTCUSDT
     return base             # Kraken: BTCUSD
 

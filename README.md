@@ -2,14 +2,26 @@
 
 This project aims to ingest crypto kline data capturing the open, close, high, low, and volume of 1m interval candles from multiple exchanges and multiple trading pairs.
 
+### Motivation
+
+This project was built to explore the challenges of real-time market data ingestion:
+- Late-arriving data
+- Missing intervals
+- Exchange inconsistencies between WebSocket and REST APIs
+- Idempotent backfills
+- Warehouse partitioning at scale
+
+The goal is to build a production-style pipeline that is correct, observable, and extensible.
+
 Architecture:
 - Raw Data Ingestion Engine
     - `ingestion/engine.py` takes the provided exchanges and trading pairs from `ingestion/config.py` and establishes a web socket connection for each exchanges/trading pairs. 
     - Candle events are written locally as well as directly into S3 with append only JSONL files. 
     - Allows for scaling the number of trading pairs supported for each exchange
     - JSONL files are stored in the `kline-pipeline-bronze` S3 bucket which uses a HIVE style naming convention for the "directories"/file prefixes
+    - Data is uploaded into a new file prefix every hour
 
-- Dagster
+- Dagster (Orchestration)
     - Bronze Websocket Data Ingestion
         - The Dagster assets are created using factories for each layer of the data warehouse ingestion process. 
         - Assets responsible for uploads into the `bronze.bronze_ohclv_native` table are created via the `assets_ext_to_bronze_factory.py`
@@ -22,6 +34,7 @@ Architecture:
         - This layer is trading pair specific and exchange agnostic
         - These assets are created via the assets_silver_factory.py
     - This approach allows for scaling the number of trading pairs that can be ingested into the data warehouse
+    - Ingestion occurs hourly
 
 - Hosting
     - The Raw Data Ingestion Engine and Dagster server processes take place in a VM hosted on EC2, which also hosts the data warehouse on a PostgreSQL server.
@@ -64,3 +77,22 @@ Architecture:
         - vwap (double) [Volume Weighted Adjusted Price]
         - source (text) [Websocket or REST]
         - ingestion_ts (timestampz)
+    - Data Guarantees
+        - Exactly one candle per exchange / symbol / minute in silver
+        - Late-arriving data is merged correctly
+        - REST backfills do not overwrite WebSocket data
+        - Silver table is partitioned by hour for efficient backfills
+        - Aggregates are derived strictly from silver 1m
+        - All merges are idempotent
+    - Design Trade-offs
+        - PostgreSQL is used instead of BigQuery/Snowflake to keep costs low
+        - Hourly partitions were chosen over daily partitions to support late REST backfills
+        - Bronze is append-only to preserve raw ingestion history
+
+- Monitoring
+    - Data is connected to Looker Studio for dashboard monitoring
+    - Includes hourly completeness bar charts for each exchange / trading pair
+    
+
+
+    

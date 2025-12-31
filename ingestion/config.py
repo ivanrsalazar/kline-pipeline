@@ -9,48 +9,54 @@ class TradingPairConfig:
     interval_minutes: int
     output_dir: str
 
+PAIRS = []
 
-PAIRS = [
-    
-    # ETH USD 
-    TradingPairConfig(
-        exchange="binance",
-        symbol="ETHUSDT",
-        interval_minutes=1,
-        output_dir="/home/ubuntu/data/binance/ethusdt"
-    ),
-    TradingPairConfig(
-        exchange="kraken",
-        symbol="ETH/USD",
-        interval_minutes=1,
-        output_dir="/home/ubuntu/data/kraken/ethusd_eng"
-    ),
+target_tokens = [
+    "eth",
+    "sol",
+    "btc",
+    "link",
+    "ape",
+    "dot",
+    "pepe",
+    "trump",
+    "pump",
+    "jup",
+    "pengu",
+    "rekt",
+    "fartcoin",
+    "wif",
+    "ksm",
 
-    # SOL USD 
-    TradingPairConfig(
-        exchange="binance",
-        symbol="SOLUSDT",
-        interval_minutes=1,
-        output_dir="/home/ubuntu/data/binance/solusdt"
-    ),
-    TradingPairConfig(
-        exchange="kraken",
-        symbol="SOL/USD",
-        interval_minutes=1,
-        output_dir="/home/ubuntu/data/kraken/solusd_eng"
-    ),
-
-    # BTC USD 
-    TradingPairConfig(
-        exchange="binance",
-        symbol="BTCUSDT",
-        interval_minutes=1,
-        output_dir="/home/ubuntu/data/binance/btcusdt"
-    ),
-    TradingPairConfig(
-        exchange="kraken",
-        symbol="BTC/USD",
-        interval_minutes=1,
-        output_dir="/home/ubuntu/data/kraken/btcusd_eng"
-    ),
 ]
+
+
+for token in target_tokens:
+    if token == 'rekt':
+        PAIRS.append(
+            TradingPairConfig(
+                exchange="binance",
+                symbol=f"1000{token.upper()}USDT",
+                interval_minutes=1,
+                output_dir=f"/home/ubuntu/data/binance/{token}usdt"
+            )
+            
+        )
+    else:
+        PAIRS.append(
+            TradingPairConfig(
+                exchange="binance",
+                symbol=f"{token.upper()}USDT",
+                interval_minutes=1,
+                output_dir=f"/home/ubuntu/data/binance/{token}usdt"
+            )
+            
+        )
+    PAIRS.append(
+        TradingPairConfig(
+            exchange="kraken",
+            symbol=f"{token.upper()}/USD",
+            interval_minutes=1,
+            output_dir=f"/home/ubuntu/data/kraken/{token}usd_eng"
+        )
+    )

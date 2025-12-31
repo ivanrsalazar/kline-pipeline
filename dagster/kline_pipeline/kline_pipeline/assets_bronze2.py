@@ -21,19 +21,32 @@ def extract_symbol_from_prefix(s3_prefix: str) -> str:
 # -------------------------------------------------
 # Configuration (single source of truth)
 # -------------------------------------------------
-BRONZE_SOURCES = [
-    # ETH
-    ("kraken", "exchange=kraken/symbol=ETH-USD/interval_minutes=1"),
-    ("binance", "exchange=binance/symbol=ETHUSDT/interval_minutes=1"),
-
-    # BTC
-    ("kraken", "exchange=kraken/symbol=BTC-USD/interval_minutes=1"),
-    ("binance", "exchange=binance/symbol=BTCUSDT/interval_minutes=1"),
-
-    # SOL
-    ("kraken", "exchange=kraken/symbol=SOL-USD/interval_minutes=1"),
-    ("binance", "exchange=binance/symbol=SOLUSDT/interval_minutes=1"),
+BRONZE_SOURCES = []
+target_tokens = [
+    "eth",
+    "sol",
+    "btc",
+    "link",
+    "ape",
+    "dot",
+    "pepe",
+    "trump",
+    "pump",
+    "jup",
+    "pengu",
+    "rekt",
+    "fartcoin",
+    "wif",
+    "ksm",
 ]
+for exchange in ['binance', 'kraken']:
+    for token in target_tokens:
+        if exchange == 'binance':
+            src = (f"{exchange}",f"exchange={exchange}/symbol={token.upper()}USDT/interval_minutes=1")
+        else:
+            src = (f"{exchange}", f"exchange={exchange}/symbol={token.upper()}-USD/interval_minutes=1")
+        BRONZE_SOURCES.append(src)
+
 
 
 # -------------------------------------------------

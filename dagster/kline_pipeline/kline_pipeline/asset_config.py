@@ -1,35 +1,42 @@
-EXCHANGES = {
-    "binance": {
-        "symbols": {
-            "ETH-USD": {
-                "rest_pair": "ETHUSDT",
-                "ws_pair": "ethusdt",
-            }, 
-            "SOL-USD": {
-                "rest_pair": "SOLUSDT",
-                "ws_pair": "solusdt",
-            }, 
-            "BTC-USD": {
-                "rest_pair": "BTCUSDT",
-                "ws_pair": "btcusdt",
-            }, 
+EXCHANGES = {"binance": {"symbols": {}}, "kraken": {"symbols": {}}}
 
-        }
-    },
-    "kraken": {
-        "symbols": {
-            "ETH-USD": {
-                "rest_pair": "ETH/USD",
-                "ws_pair": "eth/usd",
-            },
-            "SOL-USD": {
-                "rest_pair": "SOL/USD",
-                "ws_pair": "sol/usd",
-            },
-            "BTC-USD": {
-                "rest_pair": "BTC/USD",
-                "ws_pair": "btc/usd",
-            },
-        }
-    }
-}
+target_tokens = [
+    "eth",
+    "sol",
+    "btc",
+    "link",
+    "ape",
+    "dot",
+    "pepe",
+    "trump",
+    "pump",
+    "jup",
+    "pengu",
+    "rekt",
+    "fartcoin",
+    "wif",
+    "ksm",
+]
+
+
+for exchange in ["binance", "kraken"]:
+    symbols = {}
+    for token in target_tokens:
+        if exchange == "binance":
+            if token == "rekt":
+                symbols[f"{token.upper()}-USD"] = {
+                "rest_pair": f"1000{token.upper()}USDT",
+                "ws_pair": f"1000{token}usdt",
+                }
+            else:
+                symbols[f"{token.upper()}-USD"] = {
+                    "rest_pair": f"{token.upper()}USDT",
+                    "ws_pair": f"{token}usdt",
+                }
+        else:
+            symbols[f"{token.upper()}-USD"] = {
+                "rest_pair": f"{token.upper()}/USD",
+                "ws_pair": f"{token}/usd",
+            }
+
+    EXCHANGES[exchange]["symbols"] = symbols

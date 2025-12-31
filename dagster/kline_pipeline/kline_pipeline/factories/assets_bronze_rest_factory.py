@@ -63,11 +63,14 @@ def get_ws_missing_minutes(
 # -------------------------------------------------
 def make_bronze_rest_asset(exchange: str, symbol: str, rest_pair: str):
     asset_name = f"bronze_ohlcv_{exchange}_{rest_pair.lower().replace('/', '')}_rest_1m_v2"
-
+    dep = f"bronze_ohlcv_native_{exchange}_{rest_pair.replace("/","").lower()}_1m_v2"
+    if rest_pair == '1000REKTUSDT':
+        asset_name = f"bronze_ohlcv_{exchange}_rektusdt_rest_1m_v2"
+        dep = f"bronze_ohlcv_native_{exchange}_rektusdt_1m_v2"
     @asset(
         name=asset_name,
         partitions_def=hourly_partitions,
-        deps=[f"bronze_ohlcv_native_{exchange}_{rest_pair.replace("/","").lower()}_1m_v2"],
+        deps=[dep],
         description=f"{exchange.upper()} REST WS-gap fill {symbol} 1m",
         group_name="bronze_rest_v2",
     )

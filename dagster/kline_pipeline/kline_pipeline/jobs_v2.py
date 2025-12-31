@@ -17,6 +17,8 @@ v2_hourly_assets_job = define_asset_job(
         # ---- REST Backfill -> BRONZE (native bronze v2)
         AssetSelection.groups("bronze_rest_v2") |
         # ---- SILVER
-        AssetSelection.groups("silver_v2")
+        AssetSelection.groups("silver_v2") |
+        # ---- GOLD
+        AssetSelection.groups("gold_v2")
     ),
 )
