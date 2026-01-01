@@ -1,6 +1,6 @@
 from dagster import asset
 from datetime import datetime, timedelta, timezone
-from ..partitions import hourly_partitions
+from kline_pipeline.schedules.partitions import hourly_partitions
 import psycopg2
 import os
 

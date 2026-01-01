@@ -1,7 +1,7 @@
 # kline_pipeline/jobs_v2.py
 
 from dagster import define_asset_job, AssetSelection
-from .partitions import hourly_partitions
+from kline_pipeline.schedules.partitions import hourly_partitions
 
 
 v2_hourly_assets_job = define_asset_job(

@@ -1,6 +1,6 @@
 # assets_bronze2.py
 
-from .factories.assets_ext_to_bronze_factory import make_ext_to_bronze_asset
+from ..factories.assets_ext_to_bronze_factory import make_ext_to_bronze_asset
 
 
 def extract_symbol_from_prefix(s3_prefix: str) -> str:

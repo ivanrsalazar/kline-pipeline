@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import psycopg2
 import os
 
-from .slack import send_slack_message
+from kline_pipeline.resources.slack import send_slack_message
 
 PG_DSN = os.environ["PG_DSN"]
 

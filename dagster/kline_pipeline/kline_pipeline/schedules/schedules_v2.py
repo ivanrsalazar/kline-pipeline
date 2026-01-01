@@ -2,7 +2,7 @@
 
 from dagster import build_schedule_from_partitioned_job
 
-from .jobs_v2 import v2_hourly_assets_job
+from ../jobs/jobs_v2 import v2_hourly_assets_job
 
 # This schedule is derived directly from the job's partitions.
 # No cron expression is used — Dagster handles partition alignment safely.

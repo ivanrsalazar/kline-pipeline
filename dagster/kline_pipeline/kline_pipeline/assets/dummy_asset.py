@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from dagster import asset, AssetExecutionContext, RetryPolicy
-from .partitions import hourly_partitions
-from .slack import send_slack_message
+from kline_pipeline.schedules.partitions import hourly_partitions
+from kline_pipeline.resources.slack import send_slack_message
 
 @asset(
     name="dummy_asset",

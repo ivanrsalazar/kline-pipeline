@@ -4,8 +4,8 @@ import psycopg2
 from psycopg2.extras import execute_batch
 import os
 
-from ..slack import send_slack_message
-from ..partitions import hourly_partitions
+from ...resources.slack import send_slack_message
+from ...schedules.partitions import hourly_partitions
 from .rest_clients import fetch_rest_rows
 
 PG_DSN = os.environ["PG_DSN"]

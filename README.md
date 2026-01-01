@@ -118,7 +118,7 @@ Architecture:
 
 - Data Model
     - As stated above, the data being captured is Open, High, Low, Close, and Volume for each of the 1m intervals. 
-    - The data is split into two tables, a bronze and silver layer.
+    - The data is split into six tables, a bronze table, a silver fact table, and four derived gold tabls.
     - `bronze.bronze_ohlcv_native` stores data that can contain duplicates and unfinished minute intervals: 
         - exchange (text)
         - symbol (text)
@@ -153,7 +153,7 @@ Architecture:
         - vwap (double) [Volume Weighted Adjusted Price]
         - source (text) [Websocket or REST]
         - ingestion_ts (timestampz)
-    - `gold.ohlcv_{interval}`, the gold derived tables for larger time intervals using the silver fact table
+    - `gold.ohlcv_{interval}`, the gold derived tables are for larger time intervals using the silver fact table
         - exchange (text)
         - symbol (text)
         - interval_start (timestampz)

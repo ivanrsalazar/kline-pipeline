@@ -1,7 +1,7 @@
 # assets_bronze_rest.py
 
-from .asset_config import EXCHANGES
-from .factories.assets_bronze_rest_factory import make_bronze_rest_asset
+from ..asset_config import EXCHANGES
+from ..factories.assets_bronze_rest_factory import make_bronze_rest_asset
 
 bronze_rest_assets = []
 

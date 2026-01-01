@@ -1,21 +1,21 @@
 from dagster import asset
 from datetime import datetime, timedelta, timezone
-from ..partitions import hourly_partitions
+from kline_pipeline.schedules.partitions import hourly_partitions
 import psycopg2
 import os
 
 PG_DSN = os.environ["PG_DSN"]
 
 @asset(
-    name="gold_ohlcv_30m",
+    name="gold_ohlcv_5m",
     partitions_def=hourly_partitions,
     deps=["fact_ohlcv_ethusd_1m_v2",
           "fact_ohlcv_btcusd_1m_v2",
           "fact_ohlcv_solusd_1m_v2",], 
     group_name="gold_v2",
-    description="30m OHLCV candles derived from silver 1m data",
-)
-def gold_ohlcv_30m(context):
+    description="5m OHLCV candles derived from silver 1m data",
+)   
+def gold_ohlcv_5m(context):
     conn = psycopg2.connect(PG_DSN)
     cur = conn.cursor()
 
@@ -26,12 +26,12 @@ def gold_ohlcv_30m(context):
 
     cur.execute(
         """
-        INSERT INTO gold.ohlcv_30m
+        INSERT INTO gold.ohlcv_5m
         SELECT
             exchange,
             symbol,
             bucket_start AS interval_start,
-            bucket_start + interval '30 minutes' AS interval_end,
+            bucket_start + interval '5 minutes' AS interval_end,
 
             (array_agg(open  ORDER BY interval_start))[1]        AS open,
             max(high)                                            AS high,
@@ -58,7 +58,7 @@ def gold_ohlcv_30m(context):
                 ingestion_ts,
                 interval_start,
                 date_trunc('hour', interval_start)
-                + floor(extract(minute from interval_start) / 30) * interval '30 minutes'
+                + floor(extract(minute from interval_start) / 5) * interval '5 minutes'
                     AS bucket_start
             FROM silver.fact_ohlcv
         ) s
@@ -81,7 +81,7 @@ def gold_ohlcv_30m(context):
 
     context.add_output_metadata({
         "window": f"{window_start} → {window_end}",
-        "interval": "30m",
+        "interval": "5m",
     })
 
     cur.close()
