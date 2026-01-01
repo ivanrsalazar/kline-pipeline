@@ -92,9 +92,9 @@ Architecture:
 - Monitoring
     - Data is connected to Looker Studio for dashboard monitoring
     - Includes hourly completeness bar charts for each exchange / trading pair
-    - ![image]("https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/part_issues.png?raw=true")
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/part_issues.png?raw=true">
     - This image shows how easily spotted Web Socket issues can be spotted using stacked bar chart
-    - ![image]("https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/total_hourly.png?raw=true")
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/total_hourly.png?raw=true">
     - As the number of trading paris supported increased, having a chart for each one is no longer scalabe
     - The chart was replaced with a completion rate bar chart which counts the number of distinct number of ingested minutes divided by the expected number of ingested minutes    
 
