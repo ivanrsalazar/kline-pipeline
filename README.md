@@ -19,6 +19,7 @@ Architecture:
     - Candle events are written locally as well as directly into S3 with append only JSONL files. 
     - Allows for scaling the number of trading pairs supported for each exchange
     - JSONL files are stored in the `kline-pipeline-bronze` S3 bucket which uses a HIVE style naming convention for the "directories"/file prefixes
+        - `kline-pipeline-bronze/exchange={exchange}/symbol={symbol}/interval_minutes=1/year={year}/month={month}/day={day}/hour={hour}`
     - Data is uploaded into a new file prefix every hour
     - Supported Trading Pairs
         - ETH/USD
@@ -53,7 +54,7 @@ Architecture:
         - This layer is trading pair specific and exchange agnostic
         - These assets are created via the assets_silver_factory.py
     - Gold Derived tables
-        - The last layer is when the larger interval windows are derived
+        - The last layer of assets are responsible for deriving the larger time intervals from the silver fact table
             - 5m
             - 15m
             - 30m
@@ -150,6 +151,20 @@ Architecture:
         - quote_volume (double)
         - trade_count (integer)
         - vwap (double) [Volume Weighted Adjusted Price]
+        - source (text) [Websocket or REST]
+        - ingestion_ts (timestampz)
+    - `gold.ohlcv_{interval}`, the gold derived tables for larger time intervals using the silver fact table
+        - exchange (text)
+        - symbol (text)
+        - interval_start (timestampz)
+        - interval_end (timestampz)
+        - open (double)
+        - high (double)
+        - low (double)
+        - close (double)
+        - volume (double)
+        - quote_volume (double)
+        - trade_count (integer)
         - source (text) [Websocket or REST]
         - ingestion_ts (timestampz)
     - Data Guarantees
