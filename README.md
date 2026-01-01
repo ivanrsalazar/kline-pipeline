@@ -20,6 +20,25 @@ Architecture:
     - Allows for scaling the number of trading pairs supported for each exchange
     - JSONL files are stored in the `kline-pipeline-bronze` S3 bucket which uses a HIVE style naming convention for the "directories"/file prefixes
     - Data is uploaded into a new file prefix every hour
+    - Supported Trading Pairs
+        - ETH/USD
+        - SOL/USD
+        - BTC/USD
+        - LINK/USD
+        - APE/USD
+        - DOT/USD
+        - PEPE/USD
+        - TRUMP/USD
+        - PUMP/USD
+        - JUP/USD
+        - PENGU/USD
+        - REKT/USD
+        - FARTCOIN/USD
+        - WIF/USD
+        - KSM/USD
+    - Exchanges Supported
+        - Binance US
+        - Kraken
 
 - Dagster (Orchestration)
     - Bronze Websocket Data Ingestion
