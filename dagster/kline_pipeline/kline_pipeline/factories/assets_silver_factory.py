@@ -167,7 +167,8 @@ def make_silver_asset(symbol: str, exchanges: list[str]):
                 status = "⚠️"
                 lines.append(f"{ex} {sym}: {cnt}/60 {status}")
 
-        send_slack_message(text="\n".join(lines))
+        if lines:
+            send_slack_message(text="\n".join(lines))
 
         context.add_output_metadata(
             {

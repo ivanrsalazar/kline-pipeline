@@ -19,6 +19,8 @@ v2_hourly_assets_job = define_asset_job(
         # ---- SILVER
         AssetSelection.groups("silver_v2") |
         # ---- GOLD
-        AssetSelection.groups("gold_v2")
+        AssetSelection.groups("gold_v2") |
+
+        AssetSelection.groups("final_message")
     ),
 )

@@ -49,9 +49,65 @@ Architecture:
         - After the websocket data has been ingested, there is a REST backfill layer that fills in the missing minutes via a REST source for each of the respective exchanges 
         - These assets are also split by exchange/trading pair combos and are created via the `assets_bronze_rest_factory.py`
     - Silver / Fact 
-        - The last layer of the ingestion process is the merge from the bronze table into the silver fact table, `silver.fact_ohlcv`
+        - The penultimate layer of the ingestion process is the merge from the bronze table into the silver fact table, `silver.fact_ohlcv`
         - This layer is trading pair specific and exchange agnostic
         - These assets are created via the assets_silver_factory.py
+    - Gold Derived tables
+        - The last layer is when the larger interval windows are derived
+            - 5m
+            - 15m
+            - 30m
+            - 1h
+        - Here's a quick merge query for the 5m interval
+        ```sql
+        INSERT INTO gold.ohlcv_5m
+        SELECT
+            exchange,
+            symbol,
+            bucket_start AS interval_start,
+            bucket_start + interval '5 minutes' AS interval_end,
+
+            (array_agg(open  ORDER BY interval_start))[1]        AS open,
+            max(high)                                            AS high,
+            min(low)                                             AS low,
+            (array_agg(close ORDER BY interval_start DESC))[1]   AS close,
+
+            sum(volume)        AS volume,
+            sum(quote_volume)  AS quote_volume,
+            sum(trade_count)   AS trade_count,
+
+            'derived'          AS source,
+            max(ingestion_ts)  AS ingestion_ts
+        FROM (
+            SELECT
+                exchange,
+                symbol,
+                open,
+                high,
+                low,
+                close,
+                volume,
+                quote_volume,
+                trade_count,
+                ingestion_ts,
+                interval_start,
+                date_trunc('hour', interval_start)
+                + floor(extract(minute from interval_start) / 5) * interval '5 minutes'
+                    AS bucket_start
+            FROM silver.fact_ohlcv
+        ) s
+        GROUP BY exchange, symbol, bucket_start
+        ON CONFLICT (exchange, symbol, interval_start)
+        DO UPDATE SET
+            open = EXCLUDED.open,
+            high = EXCLUDED.high,
+            low = EXCLUDED.low,
+            close = EXCLUDED.close,
+            volume = EXCLUDED.volume,
+            quote_volume = EXCLUDED.quote_volume,
+            trade_count = EXCLUDED.trade_count,
+            ingestion_ts = EXCLUDED.ingestion_ts;
+        ```
     - This approach allows for scaling the number of trading pairs that can be ingested into the data warehouse
     - Ingestion occurs hourly
 
@@ -111,9 +167,9 @@ Architecture:
 - Monitoring
     - Data is connected to Looker Studio for dashboard monitoring
     - Includes hourly completeness bar charts for each exchange / trading pair
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/part_issues.png?raw=true">
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/part_issues.png?raw=true">
     - This image shows how easily Web Socket issues can be spotted using stacked bar chart
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/total_hourly_stacked.png?raw=true">
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/total_hourly_stacked.png?raw=true">
     - As the number of trading pairs supported increased, having a chart for each one is no longer scalabe
     - The series of charts were replaced with a completion rate bar chart which counts the number of ingested minutes divided by the expected number of ingested minutes    
 
