@@ -92,7 +92,11 @@ Architecture:
 - Monitoring
     - Data is connected to Looker Studio for dashboard monitoring
     - Includes hourly completeness bar charts for each exchange / trading pair
-    
+    - ![image]("./docs/part_issues.png")
+    - This image shows how easily spotted Web Socket issues can be spotted using stacked bar chart
+    - ![image]("./docs/total_hourly.png")
+    - As the number of trading paris supported increased, having a chart for each one is no longer scalabe
+    - The chart was replaced with a completion rate bar chart which counts the number of distinct number of ingested minutes divided by the expected number of ingested minutes    
 
 
     

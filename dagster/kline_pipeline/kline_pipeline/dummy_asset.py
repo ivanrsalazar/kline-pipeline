@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from dagster import asset, AssetExecutionContext, RetryPolicy
 from .partitions import hourly_partitions
+from .slack import send_slack_message
 
 @asset(
     name="dummy_asset",
@@ -14,12 +15,18 @@ def dummy_asset(context: AssetExecutionContext) -> None:
         context.partition_key, "%Y-%m-%d-%H:%M"
     ).replace(tzinfo=timezone.utc)
 
+    report_hour = hour_start = datetime.strptime(
+        context.partition_key, "%H:%M"
+    ).replace(tzinfo=timezone.utc)
+
     ready_time = hour_start + timedelta(minutes=3) + timedelta(hours=1)
     now = datetime.now(timezone.utc)
     if now < ready_time:
         raise Exception(
             f"Not yet ingestion time"
         )
+    
+    send_slack_message(text=f"{report_hour} -> {report_hour + timedelta(hours=1)}")
     
     context.add_output_metadata(
         {

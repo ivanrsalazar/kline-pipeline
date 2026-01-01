@@ -15,11 +15,7 @@ def warehouse_symbol(exchange: str, symbol: str) -> str:
     Convert canonical symbol (BTC-USD) into warehouse symbol
     """
     base = symbol.replace("-", "")
-    if exchange == "binance":
-        if symbol == 'REKT':
-            return f"1000{base}T"
-        return f"{base}T"  # BTCUSD -> BTCUSDT
-    return base             # Kraken: BTCUSD
+    return f"%{base}%"
 
 
 def make_silver_asset(symbol: str, exchanges: list[str]):
@@ -151,7 +147,7 @@ def make_silver_asset(symbol: str, exchanges: list[str]):
                 SELECT COUNT(DISTINCT interval_start)
                 FROM silver.fact_ohlcv
                 WHERE exchange = %s
-                AND symbol = %s
+                AND symbol LIKE %s
                 AND interval_start >= %s
                 AND interval_start < %s
                 """,
@@ -164,15 +160,12 @@ def make_silver_asset(symbol: str, exchanges: list[str]):
         # -------------------------------------------------
         # Build Slack message
         # -------------------------------------------------
-        lines = [
-            f"✅ Silver {symbol} 1m : WH state",
-            f"{report_hour_start:%H:%M} → {report_hour_end:%H:%M} UTC",
-            "",
-        ]
+        lines = []
 
         for ex, sym, cnt in results:
-            status = "✅" if cnt == 60 else "⚠️"
-            lines.append(f"{ex} {sym}: {cnt}/60 {status}")
+            if cnt != 60:
+                status = "⚠️"
+                lines.append(f"{ex} {sym}: {cnt}/60 {status}")
 
         send_slack_message(text="\n".join(lines))
 
