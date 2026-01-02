@@ -7,11 +7,10 @@ This project aims to ingest crypto kline data capturing the open, close, high, l
 This project was built to explore the challenges of real-time market data ingestion:
 - Late-arriving data
 - Missing intervals
-- Exchange inconsistencies between WebSocket and REST APIs
 - Idempotent backfills
 - Warehouse partitioning at scale
 
-The goal is to build a production-style pipeline that is correct, observable, and extensible.
+The goal is to build a production-style pipeline that is correct, scalable, observable, and extensible.
 
 
 ### Data Flow
@@ -134,7 +133,7 @@ Architecture:
 
 - Data Model
     - As stated above, the data being captured is Open, High, Low, Close, and Volume for each of the 1m intervals. 
-    - The data is split into six tables, a bronze table, a silver fact table, and four derived gold tabls.
+    - The data is split into six tables, a bronze table, a silver fact table, and four derived gold tables.
     - `bronze.bronze_ohlcv_native` stores data that can contain duplicates and unfinished minute intervals: 
         - exchange (text)
         - symbol (text)
@@ -211,6 +210,18 @@ Architecture:
     - Shows Volume Y Axis, which is better than relative scaling
     - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/btcusd_1h.png?raw=true">
     - This shows the price chart comparison for BTC-USD 1h for both Binance and Kraken
+
+
+- Known Limitations
+    - Storing the data in a single PostgreSQL server lacks fault tolerance
+    - Finding a way to store data in BigQuery directly while reducing costs is preferred
+
+- What I would do differently
+    - Spend more time planning out cloud hosting
+    - Write directly to Google Cloud Storage
+    - Have Bronze ingestion read from GCS
+    - Store data in BigQuery (Serverless)
+
 
 
 
