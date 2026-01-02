@@ -20,6 +20,8 @@ The goal is to build a production-style pipeline that is correct, observable, an
 
 <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/raw_data_ingestion.png?raw=true">
 
+<img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/dagster_orchestration.png?raw=true">
+
 
 
 
@@ -53,6 +55,8 @@ Architecture:
         - Kraken
 
 - Dagster (Orchestration)
+    - Sleeper Asset
+        - Sleeps for the first three minutes of the hour and sends partition window to Slack
     - Bronze Websocket Data Ingestion
         - The Dagster assets are created using factories for each layer of the data warehouse ingestion process. 
         - Assets responsible for uploads into the `bronze.bronze_ohclv_native` table are created via the `assets_ext_to_bronze_factory.py`
@@ -62,7 +66,8 @@ Architecture:
         - These assets are also split by exchange/trading pair combos and are created via the `assets_bronze_rest_factory.py`
     - Silver / Fact 
         - The penultimate layer of the ingestion process is the merge from the bronze table into the silver fact table, `silver.fact_ohlcv`
-        - This layer is trading pair specific and exchange agnostic
+        - This layer is `symbol` specific and exchange agnostic
+        - Sends Slack message if missing minutes for any Exchange / Trading Pair
         - These assets are created via the assets_silver_factory.py
     - Gold Derived tables
         - The last layer of assets are responsible for deriving the larger time intervals from the silver fact table
@@ -120,6 +125,8 @@ Architecture:
             trade_count = EXCLUDED.trade_count,
             ingestion_ts = EXCLUDED.ingestion_ts;
         ```
+    - Slack Message Asset
+        - Sends `OK` message to Slack if successful
     - This approach allows for scaling the number of trading pairs that can be ingested into the data warehouse
     - Ingestion occurs hourly
 
