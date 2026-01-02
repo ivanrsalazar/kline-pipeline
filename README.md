@@ -13,9 +13,12 @@ This project was built to explore the challenges of real-time market data ingest
 
 The goal is to build a production-style pipeline that is correct, observable, and extensible.
 
+
+### Data Flow
+<img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/data_flow.png?raw=true">
+
+
 Architecture:
-- Data Flow
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/data_flow.png?raw=true">
 - Raw Data Ingestion Engine
     - `ingestion/engine.py` takes the provided exchanges and trading pairs from `ingestion/config.py` and establishes a web socket connection for each exchanges/trading pairs. 
     - Candle events are written locally as well as directly into S3 with append only JSONL files. 
