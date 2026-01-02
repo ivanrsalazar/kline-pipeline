@@ -1,228 +1,227 @@
-## Crypto Kline Data Pipeline
+# Crypto Kline Data Pipeline
 
-This project aims to ingest crypto kline data capturing the open, close, high, low, and volume of 1m interval candles from multiple exchanges and multiple trading pairs.
+A production-style data pipeline for ingesting, validating, and aggregating real-time cryptocurrency OHLCV (open, high, low, close, volume) data at 1-minute granularity across multiple exchanges and trading pairs.
 
-### Motivation
+---
 
-This project was built to explore the challenges of real-time market data ingestion:
-- Late-arriving data
-- Missing intervals
-- Idempotent backfills
-- Warehouse partitioning at scale
+## Motivation
 
-The goal is to build a production-style pipeline that is correct, scalable, observable, and extensible.
+This project was built to explore real-world challenges in **real-time market data ingestion**, including:
 
+- Late-arriving data  
+- Missing intervals  
+- Idempotent backfills  
+- High-cardinality warehouse partitioning  
+- Observability and data correctness at scale  
 
-### Data Flow
+The goal is to design a pipeline that is **correct, scalable, observable, and extensible**, while remaining cost-conscious.
+
+---
+
+## High-Level Data Flow
+
 <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/data_flow.png?raw=true">
 
+---
+
+## Architecture Overview
+
+### Raw Data Ingestion (WebSocket Engine)
+
+<img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/raw_data_ingestion.png?raw=true">
+
+#### Responsibilities
+- Establishes WebSocket connections per exchange and trading pair
+- Captures 1-minute candle events in real time
+- Writes append-only JSONL files locally and to S3
+- Rotates files hourly using Hive-style partitioned prefixes
+
+#### Implementation
+- `ingestion/engine.py`
+- Configuration via `ingestion/config.py`
+- Horizontally scalable by adding exchanges or trading pairs
+
+#### S3 Layout (Hive-style)
+```
+kline-pipeline-bronze/
+exchange={exchange}/
+symbol={symbol}/
+interval_minutes=1/
+year={year}/month={month}/day={day}/hour={hour}/
+```
+
+#### Notes
+- Trading pairs may use stablecoin bases (USDT / USDC)
+- Symbols are normalized to USD (e.g. `BTC-USD`)
+- One JSONL file per symbol per hour
+
+#### Supported Exchanges
+- Binance US
+- Kraken
+
+#### Supported Symbols
+- BTC-USD
+- ETH-USD
+- SOL-USD
+- LINK-USD
+- DOT-USD
+- APE-USD
+- PEPE-USD
+- TRUMP-USD
+- JUP-USD
+- PUMP-USD
+- PENGU-USD
+- REKT-USD
+- FARTCOIN-USD
+- WIF-USD
+- KSM-USD
+
+---
+
+## Orchestration (Dagster)
+
+<img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/dagster_orchestration.png?raw=true">
+
+All warehouse ingestion and transformations are orchestrated hourly using Dagster.
+
+### Asset Layers
+
+#### 1. Sleeper Asset
+- Delays execution for the first 3 minutes of the hour
+- Broadcasts the active partition window to Slack
+
+#### 2. Bronze Ingestion (WebSocket)
+- Assets generated via `assets_ext_to_bronze_factory.py`
+- One asset per exchange / trading pair
+- Loads raw WebSocket data into `bronze.bronze_ohlcv_native`
+
+#### 3. REST Backfill
+- Assets generated via `assets_bronze_rest_factory.py`
+- Fills missing minutes using REST APIs
+- Runs after WebSocket ingestion
+- Never overwrites newer WebSocket data
+
+#### 4. Silver (Fact Table)
+- Assets generated via `assets_silver_factory.py`
+- Exchange-agnostic, symbol-specific
+- Merges bronze data into a canonical fact table
+- Deduplicates records
+- Guarantees exactly one candle per minute
+- Emits Slack alerts for missing minutes
+
+#### 5. Gold (Derived Tables)
+- Aggregates silver 1m candles into:
+  - 5m
+  - 15m
+  - 30m
+  - 1h
+- Strictly derived from silver (no raw data leakage)
+
+Example 5-minute aggregation:
+
+```sql
+INSERT INTO gold.ohlcv_5m
+SELECT
+    exchange,
+    symbol,
+    bucket_start AS interval_start,
+    bucket_start + interval '5 minutes' AS interval_end,
+
+    (array_agg(open  ORDER BY interval_start))[1]      AS open,
+    max(high)                                          AS high,
+    min(low)                                           AS low,
+    (array_agg(close ORDER BY interval_start DESC))[1] AS close,
+
+    sum(volume)       AS volume,
+    sum(quote_volume) AS quote_volume,
+    sum(trade_count)  AS trade_count,
+
+    'derived'         AS source,
+    max(ingestion_ts) AS ingestion_ts
+FROM (
+    SELECT *,
+           date_trunc('hour', interval_start)
+           + floor(extract(minute from interval_start) / 5) * interval '5 minutes'
+           AS bucket_start
+    FROM silver.fact_ohlcv
+) s
+GROUP BY exchange, symbol, bucket_start
+ON CONFLICT (exchange, symbol, interval_start)
+DO UPDATE SET
+    open = EXCLUDED.open,
+    high = EXCLUDED.high,
+    low = EXCLUDED.low,
+    close = EXCLUDED.close,
+    volume = EXCLUDED.volume,
+    quote_volume = EXCLUDED.quote_volume,
+    trade_count = EXCLUDED.trade_count,
+    ingestion_ts = EXCLUDED.ingestion_ts;
+```
 
 
+#### 6. Slack Reporting
+- Sends success confirmation per hourly run
+- Alerts only when data completeness issues occur
 
-Architecture:
-- <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/raw_data_ingestion.png?raw=true">
-- Raw Data Ingestion Engine
-    - `ingestion/engine.py` takes the provided exchanges and trading pairs from `ingestion/config.py` and establishes a web socket connection for each exchange and trading pair. 
-    - Candle events are written locally as well as directly into S3 with append only JSONL files. 
-    - Allows for scaling the number of `trading pairs` & `symbols` supported for each `exchange`
-    - JSONL files are stored in the `kline-pipeline-bronze` S3 bucket which uses a HIVE style naming convention for the "directories"/file prefixes
-        - `kline-pipeline-bronze/exchange={exchange}/symbol={symbol}/interval_minutes=1/year={year}/month={month}/day={day}/hour={hour}`
-    - Data is uploaded into a new file prefix every hour
-    - `trading pair` may sometimes have a stable coin base pair (USDT/USDC)
-    - `symbols` is a normalized version of `trading pair` (Always USD)
-    - Supported `symbols`
-        - ETH-USD
-        - SOL-USD
-        - BTC-USD
-        - LINK-USD
-        - APE-USD
-        - DOT-USD
-        - PEPE-USD
-        - TRUMP-USD
-        - PUMP-USD
-        - JUP-USD
-        - PENGU-USD
-        - REKT-USD
-        - FARTCOIN-USD
-        - WIF-USD
-        - KSM-USD
-    - Exchanges Supported
-        - Binance US
-        - Kraken
+---
 
-- Dagster (Orchestration)
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/dagster_orchestration.png?raw=true">
-    - Sleeper Asset
-        - Sleeps for the first three minutes of the hour and sends partition window to Slack
-    - Bronze Websocket Data Ingestion
-        - The Dagster assets are created using factories for each layer of the data warehouse ingestion process. 
-        - Assets responsible for uploads into the `bronze.bronze_ohclv_native` table are created via the `assets_ext_to_bronze_factory.py`
-        - These assets are created for each exchange/trading pair combo 
-    - REST Backfill
-        - After the websocket data has been ingested, there is a REST backfill layer that fills in the missing minutes via a REST source for each of the respective exchanges 
-        - These assets are also split by exchange/trading pair combos and are created via the `assets_bronze_rest_factory.py`
-    - Silver / Fact 
-        - The penultimate layer of the ingestion process is the merge from the bronze table into the silver fact table, `silver.fact_ohlcv`
-        - This layer is `symbol` specific and exchange agnostic
-        - Sends Slack message if missing minutes for any Exchange / Trading Pair
-        - These assets are created via the assets_silver_factory.py
-    - Gold Derived tables
-        - The last layer of assets are responsible for deriving the larger time intervals from the silver fact table
-            - 5m
-            - 15m
-            - 30m
-            - 1h
-        - Here's a quick merge query for the 5m interval
-        ```sql
-        INSERT INTO gold.ohlcv_5m
-        SELECT
-            exchange,
-            symbol,
-            bucket_start AS interval_start,
-            bucket_start + interval '5 minutes' AS interval_end,
+### Hosting
 
-            (array_agg(open  ORDER BY interval_start))[1]        AS open,
-            max(high)                                            AS high,
-            min(low)                                             AS low,
-            (array_agg(close ORDER BY interval_start DESC))[1]   AS close,
+- All services run on a single EC2 instance:
+    - WebSocket ingestion engine
+    - Dagster daemon & UI
+    - PostgreSQL warehouse
+-   Instance: Ubuntu t3.medium
 
-            sum(volume)        AS volume,
-            sum(quote_volume)  AS quote_volume,
-            sum(trade_count)   AS trade_count,
+---
 
-            'derived'          AS source,
-            max(ingestion_ts)  AS ingestion_ts
-        FROM (
-            SELECT
-                exchange,
-                symbol,
-                open,
-                high,
-                low,
-                close,
-                volume,
-                quote_volume,
-                trade_count,
-                ingestion_ts,
-                interval_start,
-                date_trunc('hour', interval_start)
-                + floor(extract(minute from interval_start) / 5) * interval '5 minutes'
-                    AS bucket_start
-            FROM silver.fact_ohlcv
-        ) s
-        GROUP BY exchange, symbol, bucket_start
-        ON CONFLICT (exchange, symbol, interval_start)
-        DO UPDATE SET
-            open = EXCLUDED.open,
-            high = EXCLUDED.high,
-            low = EXCLUDED.low,
-            close = EXCLUDED.close,
-            volume = EXCLUDED.volume,
-            quote_volume = EXCLUDED.quote_volume,
-            trade_count = EXCLUDED.trade_count,
-            ingestion_ts = EXCLUDED.ingestion_ts;
-        ```
-    - Slack Message Asset
-        - Sends `OK` message to Slack if successful
-    - This approach allows for scaling the number of trading pairs that can be ingested into the data warehouse
-    - Ingestion occurs hourly
+### Data Model
 
-- Hosting
-    - The Raw Data Ingestion Engine and Dagster server processes take place in a VM hosted on EC2, which also hosts the data warehouse on a PostgreSQL server.
-    - For reference the VM is an Ubuntu t3.medium
+#### Bronze: bronze.bronze_ohlcv_native
 
-- Data Model
-    - As stated above, the data being captured is Open, High, Low, Close, and Volume for each of the 1m intervals. 
-    - The data is split into six tables, a bronze table, a silver fact table, and four derived gold tables.
-    - `bronze.bronze_ohlcv_native` stores data that can contain duplicates and unfinished minute intervals: 
-        - exchange (text)
-        - symbol (text)
-        - interval_seconds (integer)
-        - interval_start (timestampz)
-        - interval_end (timestampz)
-        - open (double)
-        - high (double)
-        - low (double)
-        - close (double)
-        - volume (double)
-        - vwap (double) [Volume Weighted Adjusted Price]
-        - trade_count (integer)
-        - source (text) [Websocket or REST]
-        - ingestion_ts (timestampz)
+- Append-only raw ingestion table.
+- May contain duplicates and incomplete minutes.
 
-   
-    - `silver.fact_ohlcv`, the silver fact table is meant to merge from the bronze table and only take the finished minute intervals and drops all the duplicates:
-        - exchange (text)
-        - symbol (text)
-        - quote_asset (text)
-        - interval_seconds (integer)
-        - interval_start (timestampz)
-        - interval_end (timestampz)
-        - open (double)
-        - high (double)
-        - low (double)
-        - close (double)
-        - volume (double)
-        - quote_volume (double)
-        - trade_count (integer)
-        - vwap (double) [Volume Weighted Adjusted Price]
-        - source (text) [Websocket or REST]
-        - ingestion_ts (timestampz)
-    - `gold.ohlcv_{interval}`, the gold derived tables are for larger time intervals using the silver fact table
-        - exchange (text)
-        - symbol (text)
-        - interval_start (timestampz)
-        - interval_end (timestampz)
-        - open (double)
-        - high (double)
-        - low (double)
-        - close (double)
-        - volume (double)
-        - quote_volume (double)
-        - trade_count (integer)
-        - source (text) [ALWAYS "Derived"]
-        - ingestion_ts (timestampz)
-    - Data Guarantees
-        - Exactly one candle per exchange / symbol / minute in silver
-        - Late-arriving data is merged correctly
-        - REST backfills do not overwrite WebSocket data
-        - Silver table is partitioned by hour for efficient backfills
-        - Aggregates are derived strictly from silver 1m
-        - All merges are idempotent
-    - Design Trade-offs
-        - PostgreSQL is used instead of BigQuery/Snowflake to keep costs low
-        - Hourly partitions were chosen over daily partitions to support late REST backfills
-        - Bronze is append-only to preserve raw ingestion history
+#### Silver: silver.fact_ohlcv
 
-- Monitoring
-    - Data is connected to Looker Studio for dashboard monitoring
-    - Includes hourly completeness bar charts for each exchange / trading pair
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/part_issues.png?raw=true">
-    - This image shows how easily Web Socket issues can be spotted using stacked bar chart
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/total_hourly_stacked.png?raw=true">
-    - As the number of trading pairs supported increased, having a chart for each one is no longer scalabe
-    - The series of charts were replaced with a completion rate bar chart which counts the number of ingested minutes divided by the expected number of ingested minutes    
+- Canonical 1-minute fact table.
+	- Deduplicated
+	- Late data merged safely
+	- Hourly partitioned
 
+#### Gold: gold.ohlcv_{interval}
 
-- Gold Dashboard
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/kraken_btcusd_1h.png?raw=true">
-    - This shows the Kraken 1h BTCUSD derived candles and volume indicator
-    - Shows Volume Y Axis, which is better than relative scaling
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/btcusd_1h.png?raw=true">
-    - This shows the price chart comparison for BTC-USD 1h for both Binance and Kraken
+- Analytical tables at larger intervals (5m, 15m, 30m, 1h).
 
+---
 
-- Known Limitations
-    - Storing the data in a single PostgreSQL server lacks fault tolerance
-    - Finding a way to store data in BigQuery directly while reducing costs is preferred
+#### Data Guarantees
+- Exactly one candle per exchange / symbol / minute in silver
+- Late REST backfills merge correctly
+- REST never overwrites newer WebSocket data
+- Hourly partitions enable efficient reprocessing
+- Aggregations derived strictly from silver
+- All merges are idempotent
 
-- What I would do differently
-    - Spend more time planning out cloud hosting
-    - Write directly to Google Cloud Storage
-    - Have Bronze ingestion read from GCS
-    - Store data in BigQuery (Serverless)
+---
 
+#### Monitoring & Analytics
+- Looker Studio dashboards for ingestion health
+- Hourly completeness checks
+- Exchange-level price and volume analytics
 
+--- 
 
+#### Known Limitations
+- Single PostgreSQL instance lacks fault tolerance
+- Storage and compute are co-located
+- Scaling requires migration to cloud-native warehousing
 
-    
+--- 
+
+#### Future Improvements
+- Migrate storage to GCS
+- Load bronze directly from object storage
+- Move warehouse to BigQuery
+- Introduce dbt for silver/gold transformations
+
