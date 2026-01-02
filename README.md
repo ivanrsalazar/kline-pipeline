@@ -209,7 +209,7 @@ Architecture:
     - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/kraken_btcusd_1h.png?raw=true">
     - This shows the Kraken 1h BTCUSD derived candles and volume indicator
     - Shows Volume Y Axis, which is better than relative scaling
-    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/kraken_btcusd_1h.png?raw=true">
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/btcusd_1h.png?raw=true">
     - This shows the price chart comparison for BTC-USD 1h for both Binance and Kraken
 
 
