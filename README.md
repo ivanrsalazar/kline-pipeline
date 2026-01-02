@@ -23,28 +23,30 @@ The goal is to build a production-style pipeline that is correct, observable, an
 Architecture:
 - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/raw_data_ingestion.png?raw=true">
 - Raw Data Ingestion Engine
-    - `ingestion/engine.py` takes the provided exchanges and trading pairs from `ingestion/config.py` and establishes a web socket connection for each exchanges/trading pairs. 
+    - `ingestion/engine.py` takes the provided exchanges and trading pairs from `ingestion/config.py` and establishes a web socket connection for each exchange and trading pair. 
     - Candle events are written locally as well as directly into S3 with append only JSONL files. 
-    - Allows for scaling the number of trading pairs supported for each exchange
+    - Allows for scaling the number of `trading pairs` & `symbols` supported for each `exchange`
     - JSONL files are stored in the `kline-pipeline-bronze` S3 bucket which uses a HIVE style naming convention for the "directories"/file prefixes
         - `kline-pipeline-bronze/exchange={exchange}/symbol={symbol}/interval_minutes=1/year={year}/month={month}/day={day}/hour={hour}`
     - Data is uploaded into a new file prefix every hour
-    - Supported Trading Pairs
-        - ETH/USD
-        - SOL/USD
-        - BTC/USD
-        - LINK/USD
-        - APE/USD
-        - DOT/USD
-        - PEPE/USD
-        - TRUMP/USD
-        - PUMP/USD
-        - JUP/USD
-        - PENGU/USD
-        - REKT/USD
-        - FARTCOIN/USD
-        - WIF/USD
-        - KSM/USD
+    - `trading pair` may sometimes have a stable coin base pair (USDT/USDC)
+    - `symbols` is a normalized version of `trading pair` (Always USD)
+    - Supported `symbols`
+        - ETH-USD
+        - SOL-USD
+        - BTC-USD
+        - LINK-USD
+        - APE-USD
+        - DOT-USD
+        - PEPE-USD
+        - TRUMP-USD
+        - PUMP-USD
+        - JUP-USD
+        - PENGU-USD
+        - REKT-USD
+        - FARTCOIN-USD
+        - WIF-USD
+        - KSM-USD
     - Exchanges Supported
         - Binance US
         - Kraken
@@ -179,7 +181,7 @@ Architecture:
         - volume (double)
         - quote_volume (double)
         - trade_count (integer)
-        - source (text) [Websocket or REST]
+        - source (text) [ALWAYS "Derived"]
         - ingestion_ts (timestampz)
     - Data Guarantees
         - Exactly one candle per exchange / symbol / minute in silver
@@ -201,6 +203,15 @@ Architecture:
     - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/total_hourly_stacked.png?raw=true">
     - As the number of trading pairs supported increased, having a chart for each one is no longer scalabe
     - The series of charts were replaced with a completion rate bar chart which counts the number of ingested minutes divided by the expected number of ingested minutes    
+
+
+- Gold Dashboard
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/kraken_btcusd_1h.png?raw=true">
+    - This shows the Kraken 1h BTCUSD derived candles and volume indicator
+    - Shows Volume Y Axis, which is better than relative scaling
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/dashboards/looker/kraken_btcusd_1h.png?raw=true">
+    - This shows the price chart comparison for BTC-USD 1h for both Binance and Kraken
+
 
 
     
