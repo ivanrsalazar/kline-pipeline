@@ -18,15 +18,10 @@ The goal is to build a production-style pipeline that is correct, observable, an
 <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/data_flow.png?raw=true">
 
 
-<img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/raw_data_ingestion.png?raw=true">
-
-<img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/dagster_orchestration.png?raw=true">
-
-
-
 
 
 Architecture:
+- <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/raw_data_ingestion.png?raw=true">
 - Raw Data Ingestion Engine
     - `ingestion/engine.py` takes the provided exchanges and trading pairs from `ingestion/config.py` and establishes a web socket connection for each exchanges/trading pairs. 
     - Candle events are written locally as well as directly into S3 with append only JSONL files. 
@@ -55,6 +50,7 @@ Architecture:
         - Kraken
 
 - Dagster (Orchestration)
+    - <img src="https://github.com/ivanrsalazar/kline-pipeline/blob/main/docs/dagster_orchestration.png?raw=true">
     - Sleeper Asset
         - Sleeps for the first three minutes of the hour and sends partition window to Slack
     - Bronze Websocket Data Ingestion
